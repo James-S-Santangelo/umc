@@ -1,0 +1,16 @@
+Park,r.squared,response,predictor,estimate,std.error,statistic,p.value
+Erindale,0,Herbivory,distance,-0.018,0.374,-0.047,0.963
+Erindale,0,Herbivory,distance_set0,-0.045,0.338,-0.134,0.894
+Erindale,0.017,Herbivory,percent_asphalt,-0.022,0.01,-2.229,0.027
+High Park,0.003,Herbivory,distance,-0.267,0.343,-0.777,0.438
+High Park,0.005,Herbivory,distance_set0,-0.264,0.264,-0.999,0.319
+High Park,0.003,Herbivory,percent_asphalt,-0.006,0.008,-0.722,0.471
+Humber,0.028,Herbivory,distance,-0.455,0.16,-2.85,0.005
+Humber,0.03,Herbivory,distance_set0,-0.393,0.133,-2.954,0.003
+Humber,0.02,Herbivory,percent_asphalt,-0.011,0.005,-2.385,0.018
+Riverdale,0.005,Herbivory,distance,-0.283,0.233,-1.217,0.225
+Riverdale,0.006,Herbivory,distance_set0,-0.257,0.198,-1.296,0.196
+Riverdale,0.01,Herbivory,percent_asphalt,-0.009,0.005,-1.703,0.09
+Rouge,0.026,Herbivory,distance,-2.484,0.894,-2.78,0.006
+Rouge,0.042,Herbivory,distance_set0,-2.35,0.662,-3.549,0
+Rouge,0.046,Herbivory,percent_asphalt,-0.083,0.022,-3.693,0
