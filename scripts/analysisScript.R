@@ -1,9 +1,29 @@
 library(tidyverse)
 library(broom)
+library(car)
 source("scripts/haversine.R")
 
 # Load datasets with plant-level data for all parks
 allPlants_allParks <- read_csv("data-clean/allPlants_allParks.csv")
+
+# Does distance to park predict HCN or gene presence?
+Anova(glm(HCN ~ Park * distance, data = allPlants_allParks, family = 'binomial'), type = 3)
+Anova(glm(Ac ~ Park * distance, data = allPlants_allParks, family = 'binomial'), type = 3)
+Anova(glm(Li ~ Park * distance, data = allPlants_allParks, family = 'binomial'), type = 3)
+
+# Does herbivory predict HCN or gene presence?
+Anova(glm(HCN ~ Park * Herbivory, data = allPlants_allParks, family = 'binomial'), type = 3)
+Anova(glm(Ac ~ Park * Herbivory, data = allPlants_allParks, family = 'binomial'), type = 3)
+Anova(glm(Li ~ Park * Herbivory, data = allPlants_allParks, family = 'binomial'), type = 3)
+
+# How does herbivory vary with distance to park or percent asphalt?
+Anova(lm(Herbivory ~ Park * percent_asphalt, data = allPlants_allParks), type = 3)
+Anova(lm(Herbivory ~ Park * distance, data = allPlants_allParks), type = 3)
+
+# Number of plants by Park
+t <- allPlants_allParks %>% 
+  group_by(Park) %>% 
+  tally()
 
 #### MODELS OF GENE FREQUENCY CHANGES BY PARK ####
 
@@ -40,7 +60,6 @@ Ac_percentAsphalt_models <- model_by_park(allPlants_allParks, "percent_asphalt",
 Li_percentAsphalt_models <- model_by_park(allPlants_allParks, "percent_asphalt", "Li")
 
 # Merge all dataframes ending with "_models"
-rm(all_models)
 all_models <- mget(ls(pattern="*_models$")) %>% 
   bind_rows() %>% 
   arrange(Park)
@@ -116,7 +135,6 @@ herbivory_distanceSet0_models <- herb_by_park(allPlants_allParks, "distance_set0
 herbivory_percentAsphalt_models <- herb_by_park(allPlants_allParks, "percent_asphalt", "Herbivory")
 
 # Merge all dataframes ending with "_models"
-rm(all_models_herbivory)
 all_models_herbivory <- mget(ls(pattern="^herbivory_*")) %>% 
   bind_rows() %>% 
   arrange(Park)
@@ -128,7 +146,6 @@ write_csv(all_models_herbivory, "analysis/herbivoryRegs_byPark_output.csv")
 summary(lm(Herbivory ~ HCN, data = allPlants_allParks))
 summary(lm(Herbivory ~ Ac, data = allPlants_allParks))
 summary(lm(Herbivory ~ Li, data = allPlants_allParks))
-
 
 #### HERBIVORY PLOTS ####
 

@@ -1,6 +1,6 @@
-library(tidyverse)
-library(broom)
-source("scripts/haversine.R")
+# Script to clean up raw data and create final merged dataset
+#
+# Author: James S. Santangelo
 
 #### ADD DISTANCE TO ORIGINAL DATASETS ####
 
