@@ -2,7 +2,7 @@ library(tidyverse)
 
 # Get all csv files in inpath
 inpath <- "data-clean/iButton_csvs/"
-files <- dir(inpath, pattern = "*.csv")
+files <- dir(inpath, pattern = "*.csv", recursive = TRUE)
 
 # read in all the files, appending the path before the filename
 df_list <- files %>%
@@ -12,7 +12,7 @@ df_list <- files %>%
 summarise_iButtons <- function(df){
   
   df_mod <- df %>% 
-    group_by(Week, Location, Lat, Long, Park, Percent_asphalt, Button) %>% 
+    group_by(Week, Location, Lat, Long, Park, Percent_asphalt, Button, Round) %>% 
     summarise(minTemp = min(Temp),
               maxTemp = max(Temp),
               meanTemp = mean(Temp))

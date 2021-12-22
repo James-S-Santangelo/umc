@@ -2,7 +2,7 @@
 library(tidyverse)
 library(data.table)
 
-clean_iButton_data <- function(df){
+clean_iButton_data <- function(df, round){
 
   # Create datetime for when iButton was placed the field
   df <- as.data.frame(df) %>%
@@ -12,40 +12,84 @@ clean_iButton_data <- function(df){
   # Get correct path to iButton datasheet, based on name of iButton in master sheet
   button <- df %>% pull(button)
   pattern <- sprintf("^%s_*", button)
-  Ibutton_csvs <- "data-raw/submitted_excel_files/Ibuttons/"
+  Ibutton_csvs <- sprintf("data-raw/submitted_excel_files/Ibuttons/%s_round/", round)
   csv_name <- list.files(Ibutton_csvs, pattern = pattern)
-  path_to_csv <- paste0(Ibutton_csvs, csv_name)
   
-  # Read in iButton data, skipping header (variable length)
-  r <- readLines(path_to_csv)
-  dt <- grep("Date/Time", r)
-  Ibutton_data <- read_csv(path_to_csv, skip = dt - 1)
-  
-  # Process and clean raw iButton data
-  Ibutton_data_mod <- Ibutton_data %>%
-    separate("Date/Time", into = c("Date", "Time"), sep = " ") %>%
+  # If CSV file for Ibutton Exists, then clean and write dataframe
+  # Some Ibuttons were lost for Second and Third collections so these don't have data
+  if(length(csv_name) != 0){
+    path_to_csv <- paste0(Ibutton_csvs, csv_name)
     
-    # Datetime for temperature record
-    mutate(Datetime = as.POSIXct(paste(Date, Time), format="%d/%m/%y %H:%M:%S")) %>%
-    
-    # Keep only observations later than when button was placed in the field
-    filter(!(Datetime < df$Installation_Datetime)) %>%
-    
-    # Add, rename, and select columns
-    mutate(Week = strftime(Datetime, format = "%V"),
-           Park = df$Park,
-           Lat = df$Latitude,
-           Long = df$Longitude,
-           Percent_asphalt = round(df$Asphalt_perc, 3),
-           Location = df$Location,
-           Button = button) %>% 
-    select(-Unit, -Datetime) %>% 
-    rename("Temp" = "Value")
-  
-  # Write clean dataframe to disk
-  outpath <- sprintf("data-clean/iButton_csvs/%s_iButton_clean.csv", button)
-  write_csv(Ibutton_data_mod, outpath)
-  
+    if(round == 'First'){
+      
+      # Read in iButton data, skipping header (variable length)
+      r <- readLines(path_to_csv)
+      dt <- grep("Date/Time", r)
+      Ibutton_data <- read_csv(path_to_csv, skip = dt - 1)
+      
+      # Process and clean raw iButton data
+      Ibutton_data_mod <- Ibutton_data %>%
+        separate("Date/Time", into = c("Date", "Time"), sep = " ") %>%
+        
+        # Datetime for temperature record
+        mutate(Datetime = as.POSIXct(paste(Date, Time), format="%d/%m/%y %H:%M:%S")) %>%
+        
+        # Keep only observations later than when button was placed in the field
+        filter(!(Datetime < df$Installation_Datetime)) %>%
+
+        # Add, rename, and select columns
+        mutate(Week = strftime(Datetime, format = "%V"),
+               Park = df$Park,
+               Lat = df$Latitude,
+               Long = df$Longitude,
+               Percent_asphalt = round(df$Asphalt_perc, 3),
+               Location = df$Location,
+               Button = button,
+               Round = round) %>%
+        select(-Unit, -Datetime) %>%
+        rename("Temp" = "Value")
+      
+      # Write clean dataframe to disk
+      dir.create(sprintf('data-clean/iButton_csvs/%s_round', round), showWarnings = FALSE)
+      outpath <- sprintf("data-clean/iButton_csvs/%s_round/%s_iButton_%sRound_clean.csv", round, button, round)
+      write_csv(Ibutton_data_mod, outpath)
+
+    }else{
+      
+      # Read in iButton data, skipping header (variable length)
+      r <- readLines(path_to_csv)
+      dt <- grep("Date/Time", r)
+      Ibutton_data <- read_csv(path_to_csv, skip = dt - 1,
+                               col_names = c('Date', 'Time', 'Unit', 'Value')) %>% 
+        filter(!(is.na(Value)))  # Remove false header row
+      
+      # Process and clean raw iButton data
+      Ibutton_data_mod <- Ibutton_data %>%
+        
+        # Datetime for temperature record
+        mutate(Datetime = as.POSIXct(paste(Date, Time), format="%d/%m/%Y %H:%M:%S")) %>%
+
+        # Keep only observations later than when button was placed in the field
+        filter(!(Datetime < df$Installation_Datetime)) %>%
+
+        # Add, rename, and select columns
+        mutate(Week = strftime(Datetime, format = "%V"),
+               Park = df$Park,
+               Lat = df$Latitude,
+               Long = df$Longitude,
+               Percent_asphalt = round(df$Asphalt_perc, 3),
+               Location = df$Location,
+               Button = button,
+               Round = round) %>%
+        select(-Unit, -Datetime) %>%
+        rename("Temp" = "Value")
+      
+      # Write clean dataframe to disk
+      dir.create(sprintf('data-clean/iButton_csvs/%s_round', round), showWarnings = FALSE)
+      outpath <- sprintf("data-clean/iButton_csvs/%s_round/%s_iButton_%sRound_clean.csv", round, button, round)
+      write_csv(Ibutton_data_mod, outpath)
+    }
+  }
 }
 
 # Load in master iButton datasets
@@ -58,8 +102,6 @@ Ibutton_master <- read_csv("data-raw/csv/ibuttons.csv") %>%
 Ibuttons_split <- group_split(Ibutton_master, button)
 
 # Clean iButton CSVs for all those listed in the master dataset
-purrr::walk(Ibuttons_split, clean_iButton_data)
-     
-
-
-
+purrr::walk(Ibuttons_split, clean_iButton_data, round = 'First')
+purrr::walk(Ibuttons_split, clean_iButton_data, round = 'Second')
+purrr::walk(Ibuttons_split, clean_iButton_data, round = 'Third')
