@@ -20,6 +20,11 @@ summarise_iButtons <- function(df){
   
 }
 
-merged_iButton_summaries <- purrr::map_dfr(df_list, summarise_iButtons)
+merged_iButton_summaries <- purrr::map_dfr(df_list, summarise_iButtons) %>% 
+  
+  # Remove duplicated observations
+  # Only for Erindale since First and Third observation rounds correspond to the same data
+  group_by(Button) %>% 
+  distinct(week_date, .keep_all = TRUE)
 
 write_csv(merged_iButton_summaries, "data-clean/iButton_summaries.csv")

@@ -31,8 +31,12 @@ clean_iButton_data <- function(df, round){
       Ibutton_data_mod <- Ibutton_data %>%
         separate("Date/Time", into = c("Date", "Time"), sep = " ") %>%
         
+        # Convert 2 digit year to 4 digit year
+        # https://stackoverflow.com/questions/60581813/is-there-a-way-to-make-a-2-digit-year-into-a-4-digit-year-in-r
+        mutate(Date = strftime(as.Date(Date, format="%d/%m/%y"), "%d/%m/%Y")) %>% 
+        
         # Datetime for temperature record
-        mutate(Datetime = as.POSIXct(paste(Date, Time), format="%d/%m/%y %H:%M:%S")) %>%
+        mutate(Datetime = as.POSIXct(paste(Date, Time), format="%d/%m/%Y %H:%M:%S")) %>%
         
         # Keep only observations later than when button was placed in the field
         filter(!(Datetime < df$Installation_Datetime)) %>%
