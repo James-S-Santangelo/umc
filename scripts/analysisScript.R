@@ -1,15 +1,16 @@
 library(tidyverse)
 library(broom)
 library(car)
+library(multcomp)
 source("scripts/haversine.R")
 
 # Load datasets with plant-level data for all parks
 allPlants_allParks <- read_csv("data-clean/allPlants_allParks.csv")
 
 # Does distance to park predict HCN or gene presence?
-Anova(glm(HCN ~ Park * distance, data = allPlants_allParks, family = 'binomial'), type = 3)
-Anova(glm(Ac ~ Park * distance, data = allPlants_allParks, family = 'binomial'), type = 3)
-Anova(glm(Li ~ Park * distance, data = allPlants_allParks, family = 'binomial'), type = 3)
+Anova(glm(HCN ~ Park * percent_asphalt, data = allPlants_allParks, family = 'binomial'), type = 3)
+Anova(glm(Ac ~ Park * percent_asphalt, data = allPlants_allParks, family = 'binomial'), type = 3)
+Anova(glm(Li ~ Park * percent_asphalt, data = allPlants_allParks, family = 'binomial'), type = 3)
 
 # Does herbivory predict HCN or gene presence?
 Anova(glm(HCN ~ Park * Herbivory, data = allPlants_allParks, family = 'binomial'), type = 3)
@@ -26,6 +27,7 @@ t <- allPlants_allParks %>%
   tally()
 
 #### MODELS OF GENE FREQUENCY CHANGES BY PARK ####
+summary(glm(Ac ~ percent_asphalt, data = allPlants_allParks %>% filter(Park == 'Riverdale'), family = 'binomial'))
 
 model_by_park <- function(df, predictor_var, response_var){
   
@@ -60,7 +62,7 @@ Ac_percentAsphalt_models <- model_by_park(allPlants_allParks, "percent_asphalt",
 Li_percentAsphalt_models <- model_by_park(allPlants_allParks, "percent_asphalt", "Li")
 
 # Merge all dataframes ending with "_models"
-all_models <- mget(ls(pattern="*_models$")) %>% 
+all_models <- mget(ls(pattern="[hcn|Ac|Li]_.*_models$")) %>% 
   bind_rows() %>% 
   arrange(Park)
 
@@ -245,3 +247,23 @@ iButton_split <- iButton_summaries %>%
 purrr::walk(iButton_split, temp_plots, "minTemp")
 purrr::walk(iButton_split, temp_plots, "maxTemp")
 purrr::walk(iButton_split, temp_plots, "meanTemp")
+
+###################################################
+#### PLOT OF HCN< AC, LI PRESENCE BY % ASPHALT ####
+###################################################
+cols <- c('#86a873', '#00798c', '#27187e', '#F46036', '#A41623')
+allPlants_allParks %>% 
+  mutate(sig = ifelse(Park %in% c('Riverdale', 'High Park'), 'Yes', 'No')) %>% 
+  ggplot(., aes(x=percent_asphalt, y=Ac)) + 
+  geom_line(stat = "smooth", 
+            method="glm", 
+            size = 1.5,
+            fullrange=TRUE,
+            method.args = list(family = "binomial"),
+            aes(color = Park, linetype = sig)) +
+  ylab("Presence of Ac") +
+  xlab("Percent asphalt") + 
+  # scale_alpha_discrete(range = c(0.5, 1)) +
+  scale_color_manual(values = cols) +
+  scale_linetype_manual(values = c('dashed', 'solid')) +
+  ng1

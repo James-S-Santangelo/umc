@@ -51,4 +51,10 @@ merged_iButton_summaries %>%
   ungroup() %>% 
   group_by(Park, n_rounds) %>%
   summarise(n_buttons = n())
-  
+
+merged_iButton_summaries %>% 
+  group_by(Button) %>% 
+  distinct(Round) %>% 
+  ungroup() %>% 
+  group_by(Round) %>% 
+  summarise(n())
