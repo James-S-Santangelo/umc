@@ -95,8 +95,7 @@ clean_iButton_data <- function(df, round){
 # Load in master iButton datasets
 Ibutton_master <- read_csv("data-raw/csv/ibuttons.csv") %>% 
   select("Park":"Asphalt_perc") %>% 
-  mutate(button = paste0(Park, Name)) %>% 
-  filter(button != "Rouge2P")
+  mutate(button = paste0(Park, Name)) 
 
 # Split the master dataset into a list of separate dataframes, one for each button
 Ibuttons_split <- group_split(Ibutton_master, button)

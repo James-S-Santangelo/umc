@@ -176,7 +176,7 @@ iButton_summaries <- read_csv("data-clean/iButton_summaries.csv") %>%
 tempMod_by_park <- function(df, response_var, predictor_var){
   
   model_output <- df %>% 
-    group_by(Park) %>% 
+    group_by(Park, Round) %>% 
     do(mod = lm(as.formula(paste(response_var, predictor_var, sep = "~")), data = .)) 
   
   tidy_output <- model_output %>% 
@@ -206,7 +206,6 @@ meanTemp_habitat_models <- tempMod_by_park(iButton_summaries, "meanTemp", "Habit
 meanTemp_asphalt_models <- tempMod_by_park(iButton_summaries, "meanTemp", "Percent_asphalt")
 
 # Merge all dataframes ending with "*Temp_*"
-rm(temp_models)
 temp_models <- mget(ls(pattern="*Temp_")) %>% 
   bind_rows() %>% 
   arrange(Park)
@@ -219,6 +218,7 @@ write_csv(temp_models, "analysis/tempRegs_byPark_output.csv")
 temp_plots <- function(df, response_var){
   
   park <- df$Park[1]
+  round <- df$Round[1]
 
   plot <- df %>% 
     group_by(Button, Percent_asphalt) %>% 
@@ -232,13 +232,15 @@ temp_plots <- function(df, response_var){
     ylab(sprintf("Mean %s across weeks", response_var)) + xlab("Percent asphalt") +
     theme_bw()
 
-  outpath <- sprintf("analysis/temp_plots/%s/%s_%s_by_asphalt.pdf", response_var, park, response_var)
+  dir.create(sprintf("analysis/temp_plots/%s/%s_round", response_var, round), showWarnings = FALSE)
+  outpath <- sprintf("analysis/temp_plots/%s/%s_round/%s_%s_%sRound_by_asphalt.pdf", 
+                     response_var, round, park, response_var, round)
   ggsave(filename = outpath, plot = plot, device = "pdf",
          width = 6, height = 6, units = "in", dpi = 300)
 }
 
 iButton_split <- iButton_summaries %>% 
-  group_split(Park)
+  group_split(Park, Round)
 
 purrr::walk(iButton_split, temp_plots, "minTemp")
 purrr::walk(iButton_split, temp_plots, "maxTemp")

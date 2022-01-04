@@ -13,7 +13,8 @@ summarise_iButtons <- function(df){
   
   df_mod <- df %>% 
     group_by(Week, Location, Lat, Long, Park, Percent_asphalt, Button, Round) %>% 
-    summarise(minTemp = min(Temp),
+    summarise(week_date = first(Date),
+              minTemp = min(Temp),
               maxTemp = max(Temp),
               meanTemp = mean(Temp))
   
