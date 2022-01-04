@@ -206,7 +206,7 @@ meanTemp_habitat_models <- tempMod_by_park(iButton_summaries, "meanTemp", "Habit
 meanTemp_asphalt_models <- tempMod_by_park(iButton_summaries, "meanTemp", "Percent_asphalt")
 
 # Merge all dataframes ending with "*Temp_*"
-temp_models <- mget(ls(pattern="*Temp_")) %>% 
+temp_models <- mget(ls(pattern="*Temp_.*_models")) %>% 
   bind_rows() %>% 
   arrange(Park)
 
