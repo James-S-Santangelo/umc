@@ -265,7 +265,7 @@ plot_all_clines <- function(allPlants_allParks, response){
               method.args = list(family = "binomial"),
               aes(color = Park, linetype = sig)) +
     ylab(sprintf("Presence of %s", response)) +
-    xlab("Percent asphalt") + 
+    xlab("Percent impervious surface") + 
     coord_cartesian(xlim = c(0, 100.5), ylim = c(0.1, 0.85)) +
     scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
     scale_color_manual(values = cols) +
@@ -295,5 +295,5 @@ figure2 <-( HCN_clinePlot | Ac_clinePlot | Li_clinePlot) +
         plot.tag.position = c(0.1, 1.1),
         plot.tag = element_text(size = 20)) 
 figure2
-ggsave(filename = 'analysis/figure2_allClines_byImperv.pdf', plot = figure2, device = "pdf",
+ggsave(filename = 'analysis/figure2_allClines_byImperv.png', plot = figure2, device = "png",
        width = 12, height = 5, units = "in", dpi = 600)
