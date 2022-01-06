@@ -1,7 +1,8 @@
 library(tidyverse)
 library(broom)
 library(car)
-library(multcomp)
+library(MetBrewer)
+library(patchwork)
 source("scripts/haversine.R")
 
 # Load datasets with plant-level data for all parks
@@ -27,7 +28,6 @@ t <- allPlants_allParks %>%
   tally()
 
 #### MODELS OF GENE FREQUENCY CHANGES BY PARK ####
-summary(glm(Ac ~ percent_asphalt, data = allPlants_allParks %>% filter(Park == 'Riverdale'), family = 'binomial'))
 
 model_by_park <- function(df, predictor_var, response_var){
   
@@ -251,19 +251,49 @@ purrr::walk(iButton_split, temp_plots, "meanTemp")
 ###################################################
 #### PLOT OF HCN< AC, LI PRESENCE BY % ASPHALT ####
 ###################################################
-cols <- c('#86a873', '#00798c', '#27187e', '#F46036', '#A41623')
-allPlants_allParks %>% 
-  mutate(sig = ifelse(Park %in% c('Riverdale', 'High Park'), 'Yes', 'No')) %>% 
-  ggplot(., aes(x=percent_asphalt, y=Ac)) + 
-  geom_line(stat = "smooth", 
-            method="glm", 
-            size = 1.5,
-            fullrange=TRUE,
-            method.args = list(family = "binomial"),
-            aes(color = Park, linetype = sig)) +
-  ylab("Presence of Ac") +
-  xlab("Percent asphalt") + 
-  # scale_alpha_discrete(range = c(0.5, 1)) +
-  scale_color_manual(values = cols) +
-  scale_linetype_manual(values = c('dashed', 'solid')) +
-  ng1
+cols <- met.brewer('Lakota', type = 'discrete', n = 5)
+
+plot_all_clines <- function(allPlants_allParks, response){
+ 
+  plot <-  allPlants_allParks %>% 
+    mutate(sig = ifelse(response == 'Ac' & Park %in% c('Riverdale', 'High Park'), 'Yes', 'No')) %>% 
+    ggplot(., aes(x=percent_asphalt, y=!!sym(response))) + 
+    geom_line(stat = "smooth", 
+              method="glm", 
+              size = 1.5,
+              fullrange=TRUE,
+              method.args = list(family = "binomial"),
+              aes(color = Park, linetype = sig)) +
+    ylab(sprintf("Presence of %s", response)) +
+    xlab("Percent asphalt") + 
+    coord_cartesian(xlim = c(0, 100.5), ylim = c(0.1, 0.85)) +
+    scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
+    scale_color_manual(values = cols) +
+    scale_linetype_manual(values = c('dashed', 'solid'), 
+                          limits = c('No', 'Yes')) +
+    ng1  
+ 
+ return(plot)
+}
+
+HCN_clinePlot <- plot_all_clines(allPlants_allParks, 'HCN')
+Ac_clinePlot <- plot_all_clines(allPlants_allParks, 'Ac')
+Li_clinePlot <- plot_all_clines(allPlants_allParks, 'Li')
+
+figure2 <-( HCN_clinePlot | Ac_clinePlot | Li_clinePlot) +
+  plot_layout(guides = 'collect') &
+  plot_annotation(tag_levels = 'A') &
+  theme(legend.position = 'bottom', 
+        legend.direction="horizontal",
+        legend.text = element_text(size=15), 
+        legend.key = element_rect(fill = "white"),
+        legend.title = element_blank(),
+        legend.key.size = unit(1, "cm"),
+        legend.spacing.x = unit(0.5, "cm"),
+        legend.background = element_blank(),
+        legend.box.background = element_rect(colour = "black", size = 1),
+        plot.tag.position = c(0.1, 1.1),
+        plot.tag = element_text(size = 20)) 
+figure2
+ggsave(filename = 'analysis/figure2_allClines_byImperv.pdf', plot = figure2, device = "pdf",
+       width = 12, height = 5, units = "in", dpi = 600)
