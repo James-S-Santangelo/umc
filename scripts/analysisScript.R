@@ -1,299 +1,61 @@
-library(tidyverse)
-library(broom)
-library(car)
-library(MetBrewer)
-library(patchwork)
-source("scripts/haversine.R")
+# Script with all main analyses
+#
+# Author: James S. Santangelo
+
+#### SETUP ####
 
 # Load datasets with plant-level data for all parks
-allPlants_allParks <- read_csv("data-clean/allPlants_allParks.csv")
+# Create binary category for presence/absence of herbivory
+allPlants_allParks <- read_csv("data-clean/allPlants_allParks.csv", show_col_types = FALSE) %>% 
+  mutate(Herbivory_bin = ifelse(Herbivory == 0, 0, 1))
 
-# Does distance to park predict HCN or gene presence?
-Anova(glm(HCN ~ Park * percent_asphalt, data = allPlants_allParks, family = 'binomial'), type = 3)
-Anova(glm(Ac ~ Park * percent_asphalt, data = allPlants_allParks, family = 'binomial'), type = 3)
-Anova(glm(Li ~ Park * percent_asphalt, data = allPlants_allParks, family = 'binomial'), type = 3)
+#### CHANGES IN HCN/GENE PRESENCE/ABSENCE ####
 
-# Does herbivory predict HCN or gene presence?
-Anova(glm(HCN ~ Park * Herbivory, data = allPlants_allParks, family = 'binomial'), type = 3)
-Anova(glm(Ac ~ Park * Herbivory, data = allPlants_allParks, family = 'binomial'), type = 3)
-Anova(glm(Li ~ Park * Herbivory, data = allPlants_allParks, family = 'binomial'), type = 3)
+# Run global logistic regressions testing whether HCN or gene (i.e., Ac/Li) presence/absence
+#   varies across parks, with percent impervious surface, or the amount of herbivore damage. 
+#   Herbivory treated as binary (yes/no) since many zeros made model fits look terrible if
+#   treated as continuous. 
 
-# How does herbivory vary with distance to park or percent asphalt?
-Anova(lm(Herbivory ~ Park * percent_asphalt, data = allPlants_allParks), type = 3)
-Anova(lm(Herbivory ~ Park * distance, data = allPlants_allParks), type = 3)
+## HCN ##
 
-# Number of plants by Park
-t <- allPlants_allParks %>% 
-  group_by(Park) %>% 
-  tally()
+# Model
+modHCN_imperv_herb <- glm(HCN ~ Park * percent_asphalt * Herbivory_bin, 
+                          family = 'binomial', data = allPlants_allParks)
+par(mfrow = c(2, 2))
+plot(modHCN_imperv_herb)
+Anova(modHCN_imperv_herb, type = 3)
 
-#### MODELS OF GENE FREQUENCY CHANGES BY PARK ####
+## Ac ##
 
-model_by_park <- function(df, predictor_var, response_var){
-  
-  model_output <- df %>% 
-    group_by(Park) %>% 
-    do(mod = glm(as.formula(paste(response_var, predictor_var, sep = "~")), family = "binomial", data = .))  %>%
-    tidy(., mod) %>% 
-    filter(term == predictor_var) %>%
-    mutate(response = response_var) %>%
-    rename("predictor" = "term") %>%
-    select(Park, response, predictor, everything()) %>%
-    mutate_if(is.numeric, round, 3)
+# Model
+modAc_imperv_herb <- glm(Ac ~ Park * percent_asphalt * Herbivory_bin, 
+                          family = 'binomial', data = allPlants_allParks)
+plot(modAc_imperv_herb)
+Anova(modAc_imperv_herb, type = 3)
 
-  
-  return(model_output)
-  
-}
+## Li ##
 
-# Run models with distance as the predictor
-hcn_distance_models <- model_by_park(allPlants_allParks, "distance", "HCN")
-Ac_distance_models <- model_by_park(allPlants_allParks, "distance", "Ac")
-Li_distance_models <- model_by_park(allPlants_allParks, "distance", "Li")
+# Model
+modLi_imperv_herb <- glm(Li ~ Park * percent_asphalt * Herbivory_bin, 
+                          family = 'binomial', data = allPlants_allParks)
+plot(modLi_imperv_herb)
+Anova(modLi_imperv_herb, type = 3)
 
-# Run models with distance_set0 as the predictor
-hcn_distanceSet0_models <- model_by_park(allPlants_allParks, "distance_set0", "HCN")
-Ac_distanceSet0_models <- model_by_park(allPlants_allParks, "distance_set0", "Ac")
-Li_distanceSet0_models <- model_by_park(allPlants_allParks, "distance_set0", "Li")
+#### CHANGES IN HERBIVORY ####
 
-# Run models with percent_asphalt as the predictor
-hcn_percentAsphalt_models <- model_by_park(allPlants_allParks, "percent_asphalt", "HCN")
-Ac_percentAsphalt_models <- model_by_park(allPlants_allParks, "percent_asphalt", "Ac")
-Li_percentAsphalt_models <- model_by_park(allPlants_allParks, "percent_asphalt", "Li")
+# Binary herbivory
+herb_mod_bin <- glm(Herbivory_bin ~ Park * percent_asphalt, data = allPlants_allParks, 
+                    family = 'binomial')
+plot(herb_mod_bin)
+Anova(herb_mod_bin, type = 3)
 
-# Merge all dataframes ending with "_models"
-all_models <- mget(ls(pattern="[hcn|Ac|Li]_.*_models$")) %>% 
-  bind_rows() %>% 
-  arrange(Park)
-
-# Write model outputs dataframe to disk
-write_csv(all_models, "analysis/logistigRegs_byPark_output.csv")
-
-#### PLOTS OF CHANGES IN GENE FREQUENCY WITH PERCENT ASPHALT ####
-
-plot_cline <- function(df, response_var){
-  
-  response <- df %>% pull(response_var)
-  park <- df$Park[1]
-  
-  plot <- ggplot(df, aes(x=percent_asphalt, y=response)) + 
-    geom_point(alpha=.5) +
-    stat_smooth(method="glm", se=TRUE, fullrange=TRUE, 
-                method.args = list(family=binomial),
-                color = "black") + 
-    ylab(sprintf("Presence/absence of %s", response_var)) +
-    xlab("Percent asphalt") + 
-    theme_bw()
-  
-  outpath <- sprintf("analysis/cline_plots/%s/%s_%s_by_asphalt.pdf", response_var, park, response_var)
-  ggsave(filename = outpath, plot = plot, device = "pdf", 
-         width = 6, height = 6, units = "in", dpi = 300)
-}
-
-# Split dataframe by Park
-parks_df_list <- allPlants_allParks %>% 
-  group_split(Park)
-
-# Plot change in presence/absence of genes for each gene and park
-purrr::walk(parks_df_list, plot_cline, response_var = "HCN")
-purrr::walk(parks_df_list, plot_cline, response_var = "Ac")
-purrr::walk(parks_df_list, plot_cline, response_var = "Li")
-
-
-#### ANALYSIS OF HERBIVORY DATA ####
-
-herb_by_park <- function(df, predictor_var, response_var){
-  
-  model_output <- df %>% 
-    group_by(Park) %>% 
-    do(mod = lm(as.formula(paste(response_var, predictor_var, sep = "~")), data = .)) 
-  
-  
-  tidy_output <- model_output %>% 
-    tidy(., mod) %>% 
-    filter(term == predictor_var) %>% 
-    mutate(response = response_var) %>% 
-    rename("predictor" = "term") %>% 
-    select(Park, response, predictor, everything()) %>% 
-    mutate_if(is.numeric, round, 3)
-  
-  glance_output <- model_output %>% 
-    glance(., mod) %>% 
-    select(Park, r.squared) %>% 
-    mutate(r.squared = round(r.squared, 3)) %>% 
-    left_join(., tidy_output, by = "Park")
-  
-  return(glance_output)
-  
-}
-
-# Run models with distance as the predictor
-herbivory_distance_models <- herb_by_park(allPlants_allParks, "distance", "Herbivory")
-
-# Run models with distance_set0 as the predictor
-herbivory_distanceSet0_models <- herb_by_park(allPlants_allParks, "distance_set0", "Herbivory")
-
-# Run models with percent_asphalt as the predictor
-herbivory_percentAsphalt_models <- herb_by_park(allPlants_allParks, "percent_asphalt", "Herbivory")
-
-# Merge all dataframes ending with "_models"
-all_models_herbivory <- mget(ls(pattern="^herbivory_*")) %>% 
-  bind_rows() %>% 
-  arrange(Park)
-
-# Write model outputs dataframe to disk
-write_csv(all_models_herbivory, "analysis/herbivoryRegs_byPark_output.csv")
-
-# Herbivory by gene presence
-summary(lm(Herbivory ~ HCN, data = allPlants_allParks))
-summary(lm(Herbivory ~ Ac, data = allPlants_allParks))
-summary(lm(Herbivory ~ Li, data = allPlants_allParks))
-
-#### HERBIVORY PLOTS ####
-
-herb_plot <- function(df){
-  
-  park <- df$Park[1]
-  
-  plot <- ggplot(df, aes(x=percent_asphalt, y=Herbivory)) + 
-    geom_point(alpha=.5) +
-    stat_smooth(method="lm", se=TRUE,
-                color = "black") + 
-    ylab(sprintf("Percent herbivory")) +
-    xlab("Percent asphalt") + 
-    theme_bw()
-  
-  outpath <- sprintf("analysis/herbivory_plots/%s_herbivory_by_asphalt.pdf", park)
-  ggsave(filename = outpath, plot = plot, device = "pdf", 
-         width = 6, height = 6, units = "in", dpi = 300)
-}
-
-purrr::walk(parks_df_list, herb_plot)
-
-#### ANALYSIS OF IBUTTON TEMPERATURE DATA ####
+# Continuous herbivory
+# Note: This model looks terrible
+herb_mod_cont <- lm(sqrt(Herbivory) ~ Park * percent_asphalt, data = allPlants_allParks)
+plot(herb_mod_cont)
+Anova(herb_mod_cont, type = 3)
 
 iButton_summaries <- read_csv("data-clean/iButton_summaries.csv") %>% 
   mutate(Habitat = ifelse(Location == "Park", "Park", "Transect"))
 
-tempMod_by_park <- function(df, response_var, predictor_var){
-  
-  model_output <- df %>% 
-    group_by(Park, Round) %>% 
-    do(mod = lm(as.formula(paste(response_var, predictor_var, sep = "~")), data = .)) 
-  
-  tidy_output <- model_output %>% 
-    tidy(., mod) %>% 
-    filter(term != "(Intercept)") %>% 
-    mutate(response = response_var) %>% 
-    rename("predictor" = "term") %>% 
-    select(Park, response, predictor, everything()) %>% 
-    mutate_if(is.numeric, round, 3)
-  
-  glance_output <- model_output %>% 
-    glance(., mod) %>% 
-    select(Park, r.squared) %>% 
-    mutate(r.squared = round(r.squared, 3)) %>% 
-    left_join(., tidy_output)
-    
-  
-  return(glance_output)
-  
-}
 
-minTemp_habitat_models <- tempMod_by_park(iButton_summaries, "minTemp", "Habitat")
-minTemp_asphalt_models <- tempMod_by_park(iButton_summaries, "minTemp", "Percent_asphalt")
-maxTemp_habitat_models <- tempMod_by_park(iButton_summaries, "maxTemp", "Habitat")
-maxTemp_asphalt_models <- tempMod_by_park(iButton_summaries, "maxTemp", "Percent_asphalt")
-meanTemp_habitat_models <- tempMod_by_park(iButton_summaries, "meanTemp", "Habitat")
-meanTemp_asphalt_models <- tempMod_by_park(iButton_summaries, "meanTemp", "Percent_asphalt")
-
-# Merge all dataframes ending with "*Temp_*"
-temp_models <- mget(ls(pattern="*Temp_.*_models")) %>% 
-  bind_rows() %>% 
-  arrange(Park)
-
-# Write model outputs dataframe to disk
-write_csv(temp_models, "analysis/tempRegs_byPark_output.csv")
-
-#### PLOTS OF IBUTTON TEMPERATURE DATA ####
-
-temp_plots <- function(df, response_var){
-  
-  park <- df$Park[1]
-  round <- df$Round[1]
-
-  plot <- df %>% 
-    group_by(Button, Percent_asphalt) %>% 
-    summarise(mean = mean(eval(parse(text = response_var))),
-              sd = sd(eval(parse(text = response_var))),
-              se = sd / sqrt(n()))  %>%
-    ggplot(., aes(x = Percent_asphalt, y = mean)) +
-    geom_errorbar(aes(min = mean - se, max = mean + se), width = 0.15, color = "black") +
-    geom_point(size = 2) +
-    geom_smooth(method = "lm", se = TRUE, color = "black") +
-    ylab(sprintf("Mean %s across weeks", response_var)) + xlab("Percent asphalt") +
-    theme_bw()
-
-  dir.create(sprintf("analysis/temp_plots/%s/%s_round", response_var, round), showWarnings = FALSE)
-  outpath <- sprintf("analysis/temp_plots/%s/%s_round/%s_%s_%sRound_by_asphalt.pdf", 
-                     response_var, round, park, response_var, round)
-  ggsave(filename = outpath, plot = plot, device = "pdf",
-         width = 6, height = 6, units = "in", dpi = 300)
-}
-
-iButton_split <- iButton_summaries %>% 
-  group_split(Park, Round)
-
-purrr::walk(iButton_split, temp_plots, "minTemp")
-purrr::walk(iButton_split, temp_plots, "maxTemp")
-purrr::walk(iButton_split, temp_plots, "meanTemp")
-
-###################################################
-#### PLOT OF HCN< AC, LI PRESENCE BY % ASPHALT ####
-###################################################
-cols <- met.brewer('Lakota', type = 'discrete', n = 5)
-
-plot_all_clines <- function(allPlants_allParks, response){
- 
-  plot <-  allPlants_allParks %>% 
-    mutate(sig = ifelse(response == 'Ac' & Park %in% c('Riverdale', 'High Park'), 'Yes', 'No')) %>% 
-    ggplot(., aes(x=percent_asphalt, y=!!sym(response))) + 
-    geom_line(stat = "smooth", 
-              method="glm", 
-              size = 1.5,
-              fullrange=TRUE,
-              method.args = list(family = "binomial"),
-              aes(color = Park, linetype = sig)) +
-    ylab(sprintf("Presence of %s", response)) +
-    xlab("Percent impervious surface") + 
-    coord_cartesian(xlim = c(0, 100.5), ylim = c(0.1, 0.85)) +
-    scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
-    scale_color_manual(values = cols) +
-    scale_linetype_manual(values = c('dashed', 'solid'), 
-                          limits = c('No', 'Yes')) +
-    ng1  
- 
- return(plot)
-}
-
-HCN_clinePlot <- plot_all_clines(allPlants_allParks, 'HCN')
-Ac_clinePlot <- plot_all_clines(allPlants_allParks, 'Ac')
-Li_clinePlot <- plot_all_clines(allPlants_allParks, 'Li')
-
-figure2 <-( HCN_clinePlot | Ac_clinePlot | Li_clinePlot) +
-  plot_layout(guides = 'collect') &
-  plot_annotation(tag_levels = 'A') &
-  theme(legend.position = 'bottom', 
-        legend.direction="horizontal",
-        legend.text = element_text(size=15), 
-        legend.key = element_rect(fill = "white"),
-        legend.title = element_blank(),
-        legend.key.size = unit(1, "cm"),
-        legend.spacing.x = unit(0.5, "cm"),
-        legend.background = element_blank(),
-        legend.box.background = element_rect(colour = "black", size = 1),
-        plot.tag.position = c(0.1, 1.1),
-        plot.tag = element_text(size = 20)) 
-figure2
-ggsave(filename = 'analysis/figure2_allClines_byImperv.png', plot = figure2, device = "png",
-       width = 12, height = 5, units = "in", dpi = 600)
