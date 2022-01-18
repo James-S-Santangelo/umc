@@ -25,7 +25,7 @@ clean_iButton_data <- function(df, round){
       # Read in iButton data, skipping header (variable length)
       r <- readLines(path_to_csv)
       dt <- grep("Date/Time", r)
-      Ibutton_data <- read_csv(path_to_csv, skip = dt - 1)
+      Ibutton_data <- read_csv(path_to_csv, skip = dt - 1, show_col_types = FALSE)
       
       # Process and clean raw iButton data
       Ibutton_data_mod <- Ibutton_data %>%
@@ -42,7 +42,10 @@ clean_iButton_data <- function(df, round){
         filter(!(Datetime < df$Installation_Datetime)) %>%
 
         # Add, rename, and select columns
-        mutate(Week = strftime(Datetime, format = "%V"),
+        mutate(Year = strftime(Datetime, format = "%Y"),
+               Month = strftime(Datetime, format = "%B"),
+               Day = strftime(Datetime, format = "%d"),
+               Week = strftime(Datetime, format = "%V"),
                Park = df$Park,
                Lat = df$Latitude,
                Long = df$Longitude,
@@ -63,13 +66,14 @@ clean_iButton_data <- function(df, round){
       # Read in iButton data, skipping header (variable length)
       r <- readLines(path_to_csv)
       dt <- grep("Date/Time", r)
-      Ibutton_data <- read_csv(path_to_csv, skip = dt - 1,
-                               col_names = c('Date', 'Time', 'Unit', 'Value')) %>% 
-        filter(!(is.na(Value)))  # Remove false header row
+      # Need to manualy set column names for second and third rounds
+      Ibutton_data <- read_csv(path_to_csv, skip = dt,
+                               show_col_types = FALSE) 
+      names(Ibutton_data) <- c('Date', 'Time', 'Unit', 'Value')
       
       # Process and clean raw iButton data
       Ibutton_data_mod <- Ibutton_data %>%
-        
+
         # Datetime for temperature record
         mutate(Datetime = as.POSIXct(paste(Date, Time), format="%d/%m/%Y %H:%M:%S")) %>%
 
@@ -77,7 +81,10 @@ clean_iButton_data <- function(df, round){
         filter(!(Datetime < df$Installation_Datetime)) %>%
 
         # Add, rename, and select columns
-        mutate(Week = strftime(Datetime, format = "%V"),
+        mutate(Year = strftime(Datetime, format = "%Y"),
+               Month = strftime(Datetime, format = "%B"),
+               Day = strftime(Datetime, format = "%d"),
+               Week = strftime(Datetime, format = "%V"),
                Park = df$Park,
                Lat = df$Latitude,
                Long = df$Longitude,
@@ -87,7 +94,7 @@ clean_iButton_data <- function(df, round){
                Round = round) %>%
         select(-Unit, -Datetime) %>%
         rename("Temp" = "Value")
-      
+
       # Write clean dataframe to disk
       dir.create(sprintf('data-clean/iButton_csvs/%s_round', round), showWarnings = FALSE)
       outpath <- sprintf("data-clean/iButton_csvs/%s_round/%s_iButton_%sRound_clean.csv", round, button, round)
