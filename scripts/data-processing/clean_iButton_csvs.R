@@ -21,15 +21,23 @@ clean_iButton_data <- function(df, round){
     path_to_csv <- paste0(Ibutton_csvs, csv_name)
     
     if(round == 'First'){
-      
+
       # Read in iButton data, skipping header (variable length)
       r <- readLines(path_to_csv)
       dt <- grep("Date/Time", r)
-      Ibutton_data <- read_csv(path_to_csv, skip = dt - 1, show_col_types = FALSE)
-      
+      Ibutton_data <- read_delim(path_to_csv, skip = dt, show_col_types = FALSE, delim=',')
+      names(Ibutton_data) <- c('Date_Time', 'Unit', 'Ten_val', 'Deci_val')
+      buttons_fucked_by_excel <- c("Erindale2W", "Erindale3E", "Erindale4E", "Erindale5E", "Erindale5P", "Erindale5W")
+      Ibutton_data <- Ibutton_data %>%
+        mutate(Deci_val = ifelse(is.na(Deci_val), 0, Deci_val),
+               Value = as.numeric(paste(Ten_val, Deci_val, sep = '.'))) %>%
+        dplyr::select(-Ten_val, -Deci_val) %>% 
+        mutate(Date_Time = case_when(button %in% buttons_fucked_by_excel ~ paste0(Date_Time, ":00"),
+                                     TRUE ~ Date_Time))
+
       # Process and clean raw iButton data
       Ibutton_data_mod <- Ibutton_data %>%
-        separate("Date/Time", into = c("Date", "Time"), sep = " ") %>%
+        separate(Date_Time, into = c("Date", "Time"), sep = " ") %>%
         
         # Convert 2 digit year to 4 digit year
         # https://stackoverflow.com/questions/60581813/is-there-a-way-to-make-a-2-digit-year-into-a-4-digit-year-in-r
@@ -37,7 +45,7 @@ clean_iButton_data <- function(df, round){
         
         # Datetime for temperature record
         mutate(Datetime = as.POSIXct(paste(Date, Time), format="%d/%m/%Y %H:%M:%S")) %>%
-        
+
         # Keep only observations later than when button was placed in the field
         filter(!(Datetime < df$Installation_Datetime)) %>%
 
@@ -55,7 +63,7 @@ clean_iButton_data <- function(df, round){
                Round = round) %>%
         select(-Unit, -Datetime) %>%
         rename("Temp" = "Value")
-      
+
       # Write clean dataframe to disk
       dir.create(sprintf('data-clean/iButton_csvs/%s_round', round), showWarnings = FALSE)
       outpath <- sprintf("data-clean/iButton_csvs/%s_round/%s_iButton_%sRound_clean.csv", round, button, round)
@@ -67,10 +75,9 @@ clean_iButton_data <- function(df, round){
       r <- readLines(path_to_csv)
       dt <- grep("Date/Time", r)
       # Need to manualy set column names for second and third rounds
-      Ibutton_data <- read_csv(path_to_csv, skip = dt,
-                               show_col_types = FALSE) 
+      Ibutton_data <- read_csv(path_to_csv, skip = dt, show_col_types = FALSE) 
       names(Ibutton_data) <- c('Date', 'Time', 'Unit', 'Value')
-      
+
       # Process and clean raw iButton data
       Ibutton_data_mod <- Ibutton_data %>%
 
@@ -106,7 +113,8 @@ clean_iButton_data <- function(df, round){
 # Load in master iButton datasets
 Ibutton_master <- read_csv("data-raw/csv/ibuttons.csv") %>% 
   select("Park":"Asphalt_perc") %>% 
-  mutate(button = paste0(Park, Name)) 
+  mutate(button = paste0(Park, Name)) %>% 
+  filter(button != 'Rouge3P')  # This button is corrupted
 
 # Split the master dataset into a list of separate dataframes, one for each button
 Ibuttons_split <- group_split(Ibutton_master, button)
