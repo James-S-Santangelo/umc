@@ -11,7 +11,9 @@ library(tidyverse)
 library(broom)
 library(car)
 library(data.table)
+library(ggeffects)
 library(patchwork)
+library(DHARMa)
 source("scripts/functions.R")
 
 # Create all necessary output paths

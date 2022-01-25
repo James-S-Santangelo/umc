@@ -100,6 +100,11 @@ purrr::walk(iButton_split, temp_plots, "meanTemp")
 
 ## Plot of HCN, Ac, and Li against percent asphalt, linetype by significance
 
+modAc_imperv_herb_T3_predict <- ggeffect(modHCN_imperv_herb_T2, 
+                                         terms = c("percent_asphalt [all]", 'Park'))
+ggplot(modAc_imperv_herb_T3_predict, aes(x, predicted, color = group)) + geom_line()
+
+
 cols <- met.brewer('Lakota', type = 'discrete', n = 5)
 
 HCN_clinePlot <- plot_all_clines(allPlants_allParks, 'HCN')
@@ -124,3 +129,14 @@ figure2
 
 ggsave(filename = 'analysis/figure2_allClines_byImperv.png', plot = figure2, device = "png",
        width = 12, height = 5, units = "in", dpi = 600)
+
+#### MAIN EFFECT OF % IMPERV ON HCN ####
+
+modHCN_imperv_herb_T2_predict <- ggeffect(modHCN_imperv_herb_T2, terms = "percent_asphalt [all]")
+ggplot(modHCN_imperv_herb_T2_predict, aes(x, predicted)) + geom_line()
+
+#### HERBIVORY BY PARK INTERACTION FOR LI ####
+
+modLi_imperv_herb_T3_predict <- ggeffect(modLi_imperv_herb_T3, 
+                                         terms = c("Herbivory [all]", "Park"))
+ggplot(modLi_imperv_herb_T3_predict, aes(x, predicted, color = group)) + geom_line()
