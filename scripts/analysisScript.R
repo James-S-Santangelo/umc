@@ -14,11 +14,25 @@ allPlants_allParks <- read_csv("data-clean/allPlants_allParks.csv", show_col_typ
 #### CHANGES IN HCN/GENE PRESENCE/ABSENCE ####
 
 # Run global logistic regressions testing whether HCN or gene (i.e., Ac/Li) presence/absence
-#   varies across parks, with percent impervious surface, or the amount of herbivore damage. 
-#   Herbivory treated as binary (yes/no) since many zeros made model fits look terrible if
-#   treated as continuous. 
+#   varies across parks, Habitat (i.e. park green space), or their interaction.
+#   Also run follow-up models where "Habitat" is replaced with impervious surface and Herbivory
 
-## HCN ##
+### HCN ###
+
+## Habitat predictor
+
+# Model with contrasts for type 3
+modHCN_hab_T3 <- glm(HCN ~ Park * Habitat, 
+                     family = 'binomial', data = allPlants_allParks,
+                     contrasts=list(Park=contr.sum, Habitat=contr.sum))
+
+# Model diagnostics. Looks good
+diagn_HCN_hab <- simulateResiduals(fittedModel = modHCN_hab_T3, plot = T)
+
+# F-tests with type 3 SS. Significant interaction.
+modHCN_hab_AnT3 <- Anova(modHCN_hab_T3, type = 3)
+
+## Percent imperv & Herbivory predictors
 
 # Model with contrasts for type 3
 modHCN_imperv_herb_T3 <- glm(HCN ~ Park * percent_asphalt * Herbivory, 
@@ -37,7 +51,24 @@ modHCN_imperv_herb_T2 <- glm(HCN ~ Park * percent_asphalt * Herbivory,
                                    family = 'binomial', data = allPlants_allParks)
 modHCN_imperv_herb_AnT2 <- Anova(modHCN_imperv_herb_T2, type = 2)
 
-## Ac ##
+### Ac ###
+
+## Habitat predictor
+
+# Model with contrasts for type 3
+modAc_hab_T3 <- glm(Ac ~ Park * Habitat, 
+                     family = 'binomial', data = allPlants_allParks,
+                     contrasts=list(Park=contr.sum, Habitat=contr.sum))
+
+# Model diagnostics. Looks good
+diagn_Ac_hab <- simulateResiduals(fittedModel = modAc_hab_T3, plot = T)
+# More robust test of outliers. None detected. 
+diagn_Ac_hab_outTest <- testOutliers(diagn_Ac_hab, type = 'bootstrap')
+
+# F-tests with type 3 SS. Significant interaction.
+modAc_hab_AnT3 <- Anova(modAc_hab_T3, type = 3)
+
+## Percent imperv & Herbivory predictors
 
 # Model with contrasts for type 3
 modAc_imperv_herb_T3 <- glm(Ac ~ Park * percent_asphalt * Herbivory, 
@@ -52,9 +83,28 @@ diagn_Ac_imperv_herb_outTest <- testOutliers(diagn_Ac_imperv_herb, type = 'boots
 
 # F-tests with type 3 SS. Interaction present
 modAc_imperv_herb_AnT3 <- Anova(modAc_imperv_herb_T3, type = 3)
-modAc_imperv_herb_AnT3
 
-## Li ##
+### Li ###
+
+## Habitat predictor
+
+# Model with contrasts for type 3
+modLi_hab_T3 <- glm(Li ~ Park * Habitat, 
+                    family = 'binomial', data = allPlants_allParks,
+                    contrasts=list(Park=contr.sum, Habitat=contr.sum))
+
+# Model diagnostics. Looks good
+diagn_Li_hab <- simulateResiduals(fittedModel = modLi_hab_T3, plot = T)
+
+# F-tests with type 3 SS. No significant interaction.
+modLi_hab_AnT3 <- Anova(modLi_hab_T3, type = 3)
+
+# Refit with type 2 to test main effects
+modLi_imperv_herb_T2 <- glm(Li ~ Park * Habitat, 
+                            family = 'binomial', data = allPlants_allParks)
+modLi_imperv_herb_AnT2 <- Anova(modLi_imperv_herb_T2, type = 2)
+
+## Percent imperv & Herbivory predictors
 
 # Model with contrasts for type 3
 modLi_imperv_herb_T3 <- glm(Li ~ Park * percent_asphalt * Herbivory, 
