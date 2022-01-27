@@ -14,6 +14,7 @@ library(data.table)
 library(ggeffects)
 library(patchwork)
 library(DHARMa)
+library(lme4)
 source("scripts/functions.R")
 
 # Create all necessary output paths

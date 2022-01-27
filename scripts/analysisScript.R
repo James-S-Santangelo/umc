@@ -10,6 +10,9 @@ allPlants_allParks <- read_csv("data-clean/allPlants_allParks.csv", show_col_typ
   mutate(Herbivory = Herbivory / 100) %>% 
   mutate(Habitat = ifelse(distance_set0 == 0, 'Park', 'Transect'))
 
+# Load data with summaries of daily temperature values for each Ibutton
+iButton_summaries <- read_csv("data-clean/iButton_summaries.csv", show_col_types = FALSE) %>% 
+  mutate(Habitat = ifelse(Location == "Park", "Park", "Transect"))
 
 #### CHANGES IN HCN/GENE PRESENCE/ABSENCE ####
 
@@ -157,9 +160,78 @@ modHerb_imperv_T2 <- glm(Herbivory ~ Park * percent_asphalt,
                       data = allPlants_allParks, family = 'binomial')
 modHerb_imperv_AnT2 <- Anova(modHerb_imperv_T2, type = 2)
 
+#### TEMPERATURE ANALYSES ####
 
+# Identify warmest and coldest months
+warm_cold_months <- iButton_summaries %>% 
+  group_by(Month) %>% 
+  summarise(mean_minTemp = mean(minTemp),
+            mean_maxTemp = mean(maxTemp)) %>% 
+  filter(mean_minTemp == min(mean_minTemp) | mean_maxTemp == max(mean_maxTemp)) %>% 
+  pull(Month)
 
-iButton_summaries <- read_csv("data-clean/iButton_summaries.csv") %>% 
-  mutate(Habitat = ifelse(Location == "Park", "Park", "Transect"))
+# Create dataframes with summer and winter temperature
+summer_temps <- iButton_summaries %>% filter(Month == 'July')
+winter_temps <- iButton_summaries %>% filter(Month == 'February')
 
+### Models
 
+## Summer temps
+
+# Habitat as predictor
+
+# Model with type 3 SS. No interaction
+mod_summerTemps_hab_T3 <- lmer(maxTemp ~ Park * Habitat + (1|Button), data = summer_temps,
+                           contrasts=list(Park=contr.sum, Habitat=contr.sum))
+mod_summerTemps__hab_AnT3 <- Anova(mod_summerTemps_hab_T3, type = 3)
+
+# Model diagnostics. Looks like possible heteroscedasticity 
+diagn_mod_summerTemps_hab_T3 <- simulateResiduals(fittedModel = mod_summerTemps_hab_T3, plot = T)
+# More robust test of outliers. No outliers detected 
+diagn_mod_summerTemps_hab_T3_outTest <- testOutliers(diagn_mod_summerTemps_hab_T3, type = 'bootstrap')
+
+# Refit with type 2 SS since no interaction
+mod_summerTemps_hab_T2 <- lmer(maxTemp ~ Park * Habitat + (1|Button), data = summer_temps)
+mod_summerTemps_hab_AnT2 <- Anova(mod_summerTemps_hab_T2, type = 2)
+
+# Percent Imperv as predictor
+
+# Model with type 3 SS. Interaction present
+mod_summerTemps_imperv_T3 <- lmer(maxTemp ~ Park * Percent_asphalt + (1|Button), data = summer_temps,
+                               contrasts=list(Park=contr.sum))
+mod_summerTemps_imperv_AnT3 <- Anova(mod_summerTemps_imperv_T3, type = 3)
+
+# Model diagnostics. Looks like possible heteroscedasticity 
+diagn_mod_summerTemps_imperv_T3 <- simulateResiduals(fittedModel = mod_summerTemps_imperv_T3, plot = T)
+# More robust test of outliers. No outliers detected 
+diagn_mod_summerTemps_imperv_T3_outTest <- testOutliers(diagn_mod_summerTemps_imperv_T3, type = 'bootstrap')
+
+## Winter temps
+
+# Habitat as predictor
+
+# Model with type 3 SS. No interaction
+mod_winterTemps_hab_T3 <- lmer(minTemp ~ Park * Habitat + (1|Button), data = winter_temps,
+                               contrasts=list(Park=contr.sum, Habitat=contr.sum))
+mod_winterTemps__hab_AnT3 <- Anova(mod_winterTemps_hab_T3, type = 3)
+
+# Model diagnostics. Looks like possible heteroscedasticity 
+diagn_mod_winterTemps_hab_T3 <- simulateResiduals(fittedModel = mod_winterTemps_hab_T3, plot = T)
+# More robust test of outliers. No outliers detected 
+diagn_mod_winterTemps_hab_T3_outTest <- testOutliers(diagn_mod_winterTemps_hab_T3, type = 'bootstrap')
+
+# Refit with type 2 SS since no interaction
+mod_winterTemps_hab_T2 <- lmer(minTemp ~ Park * Habitat + (1|Button), data = winter_temps)
+mod_winterTemps_hab_AnT2 <- Anova(mod_winterTemps_hab_T2, type = 2)
+
+# Percent Imperv as predictor
+
+# Model with type 3 SS. No interactions
+mod_winterTemps_imperv_T3 <- lmer(minTemp ~ Park * Percent_asphalt + (1|Button), data = winter_temps,
+                                  contrasts=list(Park=contr.sum))
+mod_winterTemps_imperv_AnT3 <- Anova(mod_winterTemps_imperv_T3, type = 3)
+
+# Model diagnostics. Looks like possible heteroscedasticity 
+diagn_mod_winterTemps_imperv_T3 <- simulateResiduals(fittedModel = mod_winterTemps_imperv_T3, plot = T)
+# More robust test of outliers. No outliers detected 
+diagn_mod_winterTemps_imperv_T3_outTest <- testOutliers(diagn_mod_winterTemps_imperv_T3, type = 'bootstrap')
