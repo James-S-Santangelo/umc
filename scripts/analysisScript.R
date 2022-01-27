@@ -121,17 +121,43 @@ modLi_imperv_herb_AnT3
 
 #### CHANGES IN HERBIVORY ####
 
-# Binary herbivory
-herb_mod_bin <- glm(Herbivory_bin ~ Park * percent_asphalt, data = allPlants_allParks, 
-                    family = 'binomial')
-plot(herb_mod_bin)
-Anova(herb_mod_bin, type = 3)
+## Habitat predictor
 
-# Continuous herbivory
-# Note: This model looks terrible
-herb_mod_cont <- lm(sqrt(Herbivory) ~ Park * percent_asphalt, data = allPlants_allParks)
-plot(herb_mod_cont)
-Anova(herb_mod_cont, type = 3)
+# Model using type 3 SS
+modHerb_hab_T3 <- glm(Herbivory ~ Park * Habitat, 
+                     data = allPlants_allParks, family = 'binomial',
+                     contrasts=list(Park=contr.sum, Habitat=contr.sum))
+modHerb_hab_AnT3<- Anova(modHerb_hab_T3, type = 3)
+
+# Model diagnostics. Doesn't look great. 
+diagn_modHerb_hab_T3 <- simulateResiduals(fittedModel = modHerb_hab_T3, plot = T)
+# More robust test of outliers. Significant 
+diagn_modHerb_hab_T3_outTest <- testOutliers(diagn_modHerb_hab_T3, type = 'bootstrap')
+
+# Refit with type 2 since no interactions
+modHerb_hab_T2 <- glm(Herbivory ~ Park * Habitat, 
+                        data = allPlants_allParks, family = 'binomial')
+modHerb_hab_AnT2 <- Anova(modHerb_hab_T2, type = 2)
+
+## Percent Imperv as predictor
+
+# Model using type 3 SS
+modHerb_imperv_T3 <- glm(Herbivory ~ Park * percent_asphalt, 
+                      data = allPlants_allParks, family = 'binomial',
+                      contrasts=list(Park=contr.sum))
+modHerb_imperv_AnT3<- Anova(modHerb_imperv_T3, type = 3)
+
+# Model diagnostics. Doesn't look great. 
+diagn_modHerb_imperv_T3 <- simulateResiduals(fittedModel = modHerb_imperv_T3, plot = T)
+# More robust test of outliers. Significant 
+diagn_modHerb_imperv_T3_outTest <- testOutliers(diagn_modHerb_imperv_T3, type = 'bootstrap')
+
+# Refit with type 2 since no interactions
+modHerb_imperv_T2 <- glm(Herbivory ~ Park * percent_asphalt, 
+                      data = allPlants_allParks, family = 'binomial')
+modHerb_imperv_AnT2 <- Anova(modHerb_imperv_T2, type = 2)
+
+
 
 iButton_summaries <- read_csv("data-clean/iButton_summaries.csv") %>% 
   mutate(Habitat = ifelse(Location == "Park", "Park", "Transect"))
