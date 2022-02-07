@@ -210,30 +210,88 @@ temp_plots <- function(df, response_var){
 
 #' Plots all HCN or gene clines on single plot against `percent_asphalt`
 #' 
-#' @param df Dataframe containing model terms
+#' @param df Dataframe containing predicted values from fitted model
 #' @param response_var Response variable to be plotted. 
 #'     One of either `HCN`, `Ac`, or `Li`
 #'     
 #'  @return ggplot object
-plot_all_clines <- function(df, response_var){
+plotClines_Imperv_allParks <- function(mod, response_var){
   
-  plot <-  df %>% 
-    mutate(sig = ifelse(response == 'Ac' & Park %in% c('Riverdale', 'High Park'), 'Yes', 'No')) %>% 
-    ggplot(., aes(x=percent_asphalt, y=!!sym(response_var))) + 
-    geom_line(stat = "smooth", 
-              method="glm", 
-              size = 1.5,
-              fullrange=TRUE,
-              method.args = list(family = "binomial"),
-              aes(color = Park, linetype = sig)) +
-    ylab(sprintf("Presence of %s", response)) +
-    xlab("Percent impervious surface") + 
-    coord_cartesian(xlim = c(0, 100.5), ylim = c(0.1, 0.85)) +
-    scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
+  # Get predicted values from model
+  vals <- seq(from = 0, to = 100, by = 0.01)
+  predicted_vals <- ggeffect(mod, terms = c("percent_asphalt [vals]", 'Park')) %>% 
+    mutate(sig = ifelse(response_var == 'Ac' & group %in% c('Riverdale', 'High Park'), 'P < 0.05', 'NS'))
+  predicted_vals_main <- ggeffect(mod, terms = c("percent_asphalt [vals]")) %>% 
+    mutate(sig = ifelse(response_var %in% c('Ac', 'HCN'), 'P < 0.05', 'NS'))
+  
+  # Plot parameters
+  y_axis_title <- case_when(response_var == 'HCN' ~ expression(paste("Presence of ", "HCN")),
+                            response_var == 'Ac' ~ expression(paste("Presence of ", italic("Ac"))),
+                            response_var == 'Li' ~ expression(paste("Presence of ", italic("Li"))))
+  cols <- met.brewer('Lakota', type = 'discrete', n = 5)
+
+  # Plot
+  plot <-  predicted_vals %>% 
+    ggplot(., aes(x=x, y=predicted)) +
+    geom_line(size = 1.5, aes(color = group, linetype = sig)) +
+    geom_line(data = predicted_vals_main, size = 1, aes(linetype = sig), 
+              color = 'black', show.legend = FALSE, alpha = 1) +
+    
+    ylab(y_axis_title) +
+    xlab("Percent impervious surface") +
+    # coord_cartesian(xlim = c(0, 100.5), ylim = c(0.1, 0.85)) +
+    # scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
     scale_color_manual(values = cols) +
-    scale_linetype_manual(values = c('dashed', 'solid'), 
-                          limits = c('No', 'Yes')) +
-    ng1  
+    scale_linetype_manual(values = c('twodash', 'solid'),
+                          limits = c('NS', 'P < 0.05')) +
+    ng1
+  
+  return(plot)
+}
+
+#' Plots all HCN or gene clines on single plot against `percent_asphalt`
+#' 
+#' @param df Dataframe containing predicted values from fitted model
+#' @param response_var Response variable to be plotted. 
+#'     One of either `HCN`, `Ac`, or `Li`
+#'     
+#'  @return ggplot object
+plotReactNorm_Hab_allParks <- function(mod, response_var){
+  
+  # Get predicted values from model
+  predicted_vals <- ggeffect(mod, terms = c("Habitat", 'Park')) %>% 
+    mutate(x = factor(ifelse(x == 'Park', 'Green space', 'Urban transect'),
+                         levels = c('Green space', 'Urban transect'))) %>% 
+    mutate(sig = ifelse(response_var %in% c('Ac', 'HCN') & group %in% c('Riverdale', 'High Park'), 'P < 0.05', 'NS'))
+  predicted_vals_main <- ggeffect(mod, terms = c("Habitat")) %>% 
+    mutate(x = factor(ifelse(x == 'Park', 'Green space', 'Urban transect'),
+                         levels = c('Green space', 'Urban transect'))) %>% 
+    mutate(sig = ifelse(response_var %in% c('Ac', 'HCN'), 'P < 0.05', 'NS'))
+  
+  # Plot parameters
+  y_axis_title <- case_when(response_var == 'HCN' ~ expression(paste("Presence of ", "HCN")),
+                            response_var == 'Ac' ~ expression(paste("Presence of ", italic("Ac"))),
+                            response_var == 'Li' ~ expression(paste("Presence of ", italic("Li"))))
+  cols <- met.brewer('Lakota', type = 'discrete', n = 5)
+
+  # Plot
+  plot <-  predicted_vals %>%
+    ggplot(., aes(x=x, y=predicted)) +
+    geom_line(data = predicted_vals_main, size = 1, aes(linetype = sig, group = group),
+              color = 'black', show.legend = FALSE, alpha = 1) +
+    geom_line(size = 1.5, aes(color = group, linetype = sig, group = group), show.legend = FALSE) +
+    geom_point(size = 5, shape = 21, aes(group = group, fill = group), show.legend = FALSE) +
+    geom_point(data = predicted_vals_main, size = 3, shape = 23, fill = 'black', alpha = 1,
+               show.legend = FALSE) +
+    ylab(y_axis_title) +
+    # xlab("") +
+    # coord_cartesian(ylim = c(0.1, 0.85)) +
+    # scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
+    scale_color_manual(values = cols) +
+    scale_fill_manual(values = cols) +
+    scale_linetype_manual(values = c('twodash', 'solid'),
+                          limits = c('NS', 'P < 0.05')) +
+    ng1 + theme(axis.title.x = element_blank())
   
   return(plot)
 }

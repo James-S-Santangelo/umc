@@ -1,5 +1,28 @@
 # Create figures & tables
 
+#### SETUP ####
+
+# Theme used for plotting
+ng1 <- theme(aspect.ratio=0.7,panel.background = element_blank(),
+             panel.grid.major = element_blank(),
+             panel.grid.minor = element_blank(),
+             panel.border=element_blank(),
+             axis.line.x = element_line(color="black",size=1),
+             axis.line.y = element_line(color="black",size=1),
+             axis.ticks=element_line(size = 1, color="black"),
+             axis.ticks.length=unit(0.25, 'cm'),
+             axis.text=element_text(color="black",size=15),
+             axis.title=element_text(color="black",size=1),
+             axis.title.y=element_text(vjust=2,size=17),
+             axis.title.x=element_text(vjust=0.1,size=17),
+             axis.text.x=element_text(size=15),
+             axis.text.y=element_text(size=15),
+             strip.text.x = element_text(size = 10, colour = "black",face = "bold"),
+             strip.background = element_rect(colour="black"),
+             legend.position = "top", legend.direction="vertical",
+             legend.text=element_text(size=17), legend.key = element_rect(fill = "white"),
+             legend.title = element_text(size=17),legend.key.size = unit(1.0, "cm"))
+
 
 #### TABLES ####
 
@@ -98,20 +121,22 @@ purrr::walk(iButton_split, temp_plots, "meanTemp")
 
 #### FIGURE 2 ####
 
-## Plot of HCN, Ac, and Li against percent asphalt, linetype by significance
+### Panels A, B, & C
+## Plot of HCN, Ac, and Li against habitat, linetype by significance, colored by park
 
-modAc_imperv_herb_T3_predict <- ggeffect(modHCN_imperv_herb_T2, 
-                                         terms = c("percent_asphalt [all]", 'Park'))
-ggplot(modAc_imperv_herb_T3_predict, aes(x, predicted, color = group)) + geom_line()
+# Get predicted values from models
+HCN_reactNorm <- plotReactNorm_Hab_allParks(modHCN_hab_T3, 'HCN')
+Ac_reactNorm <- plotReactNorm_Hab_allParks(modAc_hab_T3, 'Ac')
+Li_reactNorm <- plotReactNorm_Hab_allParks(modLi_hab_T2, 'Li')
 
+### Panels D, E, &
+## Plot of HCN, Ac, and Li against percent asphalt, linetype by significance, colored by park
 
-cols <- met.brewer('Lakota', type = 'discrete', n = 5)
+HCN_clinePlot <- plotClines_Imperv_allParks(modHCN_imperv_herb_T2, 'HCN')
+Ac_clinePlot <- plotClines_Imperv_allParks(modAc_imperv_herb_T3, 'Ac')
+Li_clinePlot <- plotClines_Imperv_allParks(modLi_imperv_herb_T3, 'Li')
 
-HCN_clinePlot <- plot_all_clines(allPlants_allParks, 'HCN')
-Ac_clinePlot <- plot_all_clines(allPlants_allParks, 'Ac')
-Li_clinePlot <- plot_all_clines(allPlants_allParks, 'Li')
-
-figure2 <-( HCN_clinePlot | Ac_clinePlot | Li_clinePlot) +
+figure2 <-( HCN_reactNorm | Ac_reactNorm | Li_reactNorm) / ( HCN_clinePlot | Ac_clinePlot | Li_clinePlot )+
   plot_layout(guides = 'collect') &
   plot_annotation(tag_levels = 'A') &
   theme(legend.position = 'bottom', 
@@ -127,8 +152,8 @@ figure2 <-( HCN_clinePlot | Ac_clinePlot | Li_clinePlot) +
         plot.tag = element_text(size = 20)) 
 figure2
 
-ggsave(filename = 'analysis/figure2_allClines_byImperv.png', plot = figure2, device = "png",
-       width = 12, height = 5, units = "in", dpi = 600)
+ggsave(filename = 'analysis/figure2_allClines_byImperv2.png', plot = figure2, device = "png",
+       width = 14, height = 9, units = "in", dpi = 600)
 
 #### MAIN EFFECT OF % IMPERV ON HCN ####
 
