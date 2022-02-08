@@ -242,10 +242,11 @@ HCN_Ac_byHerb_diff_plot <- ggplot(allDiffs, aes(x = Herb_diff, y = diff)) +
          shape = guide_legend(byrow = TRUE))
   
 
-figure3_base <-( Herb_reactNorm | maxTemp_reactNorm ) / ( HCN_Ac_byHerb_diff_plot | HCN_Ac_byMaxTemp_diff_plot ) +
+figure3_base <-( Herb_reactNorm | maxTemp_reactNorm ) / plot_spacer() / ( HCN_Ac_byHerb_diff_plot | HCN_Ac_byMaxTemp_diff_plot ) +
+  plot_layout(heights = c(4, 0.1, 4), widths = c(4, 0.1, 4)) &
   plot_annotation(tag_levels = 'A') &
   theme(plot.tag.position = c(0.1, 1.1),
-        plot.tag = element_text(size = 20)) 
+        plot.tag = element_text(size = 20))
 blank_p <- plot_spacer() + theme_void()
 leg_fig2 <- get_legend(figure2)
 
@@ -254,7 +255,8 @@ test <- plot_grid(leg_fig2,
           nrow = 1,
           ncol = 1,
           align = "hv",
-          axis = "t")
+          axis = "t") +
+  theme(panel.background = element_rect(fill = 'white', color = 'white'))
 
 figure3 <- plot_grid(test,
                      figure3_base,
@@ -262,9 +264,8 @@ figure3 <- plot_grid(test,
                      ncol = 1,
                      align = "hv",
                      axis = "t",
-                     rel_heights = c(0.10, 1)) +
-  theme(panel.background = element_rect(fill = 'white'))
+                     rel_heights = c(0.15, 1))
 
 ggsave(filename = 'analysis/figure3_herb_maxTemp_allParks.png', plot = figure3, device = "png",
-       width = 13, height = 13, units = "in", dpi = 600)
+       width = 15, height = 13, units = "in", dpi = 600)
   
