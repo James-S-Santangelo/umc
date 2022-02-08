@@ -3,7 +3,8 @@
 #### SETUP ####
 
 # Theme used for plotting
-ng1 <- theme(aspect.ratio=0.7,panel.background = element_blank(),
+ng1 <- theme(aspect.ratio=0.7,
+             panel.background = element_blank(),
              panel.grid.major = element_blank(),
              panel.grid.minor = element_blank(),
              panel.border=element_blank(),
@@ -155,13 +156,115 @@ figure2
 ggsave(filename = 'analysis/figure2_allClines_byImperv2.png', plot = figure2, device = "png",
        width = 14, height = 9, units = "in", dpi = 600)
 
-#### MAIN EFFECT OF % IMPERV ON HCN ####
+#### FIGURE 3 ####
 
-modHCN_imperv_herb_T2_predict <- ggeffect(modHCN_imperv_herb_T2, terms = "percent_asphalt [all]")
-ggplot(modHCN_imperv_herb_T2_predict, aes(x, predicted)) + geom_line()
+### Panels A & B
 
-#### HERBIVORY BY PARK INTERACTION FOR LI ####
+# Predicted change in herbivory across % imperv gradient
+Herb_reactNorm <- plotReactNorm_Hab_allParks(modHerb_hab_T2, 'Herb')
+maxTemp_reactNorm <- plotReactNorm_Hab_allParks(mod_summerTemps_hab_T2, 'maxTemp')
 
-modLi_imperv_herb_T3_predict <- ggeffect(modLi_imperv_herb_T3, 
-                                         terms = c("Herbivory [all]", "Park"))
-ggplot(modLi_imperv_herb_T3_predict, aes(x, predicted, color = group)) + geom_line()
+# Calculate Transect - Park difference in Herbivory, Temperature, Ac, and HCN
+predHCN_byPark <- ggeffect(modHCN_hab_T3, terms = c("Habitat", 'Park')) %>% 
+  dplyr::select(x, group, predicted) %>% 
+  pivot_wider(names_from = x, values_from = predicted) %>% 
+  group_by(group) %>% 
+  summarise(diff = Transect - Park) %>% 
+  mutate(var = 'HCN')
+predAc_byPark <- ggeffect(modAc_hab_T3, terms = c("Habitat", 'Park'))  %>% 
+  dplyr::select(x, group, predicted) %>% 
+  pivot_wider(names_from = x, values_from = predicted) %>% 
+  group_by(group) %>% 
+  summarise(diff = Transect - Park) %>% 
+  mutate(var = 'Ac')
+predHerb_byPark <- ggeffect(modHerb_hab_T2, terms = c("Habitat", 'Park'))  %>% 
+  dplyr::select(x, group, predicted) %>% 
+  pivot_wider(names_from = x, values_from = predicted) %>% 
+  group_by(group) %>% 
+  summarise(Herb_diff = Transect - Park)
+predMaxTemp_byPark <- ggeffect(mod_summerTemps_hab_T2, terms = c("Habitat", 'Park'))  %>% 
+  mutate(group = fct_recode(group, 'High Park' = 'HighPark')) %>% 
+  dplyr::select(x, group, predicted) %>% 
+  pivot_wider(names_from = x, values_from = predicted) %>% 
+  group_by(group) %>% 
+  summarise(maxTemp_diff = Transect - Park)
+
+allDiffs <- bind_rows(predHCN_byPark, predAc_byPark) %>% 
+  left_join(., predHerb_byPark, by = 'group') %>% 
+  left_join(., predMaxTemp_byPark, by = 'group')
+
+cols <- met.brewer('Lakota', type = 'discrete', n = 5)
+HCN_Ac_byMaxTemp_diff_plot <- ggplot(allDiffs, aes(x = maxTemp_diff, y = diff)) +
+  geom_point(size = 5, aes(fill = group, shape = var)) +
+  geom_smooth(method = 'lm', se = FALSE, size = 2, color = ' black', aes(linetype = var)) +
+  ylab("Transect - Park difference \n in HCN/Ac frequency") +
+  xlab("Transect - Park difference \n in maximum temperature") +
+  scale_fill_manual(values = cols, guide = 'none') +
+  scale_shape_manual(values = c(21, 22)) +
+  # scale_color_manual(values = cols) +
+  scale_linetype_manual(values = c('dotted', 'dashed')) +
+  ng1 +
+  ng1 +
+  theme(legend.position = c(0.13, 0.86), 
+        legend.direction="vertical",
+        legend.text = element_text(size=15), 
+        legend.key = element_rect(fill = "white"),
+        legend.title = element_blank(),
+        legend.key.height= unit(1.5, 'cm'),
+        legend.key.width= unit(2, 'cm'),
+        legend.spacing.x = unit(0.1, "cm"),
+        legend.spacing.y = unit(-0.3, "cm"),
+        legend.background = element_blank()) +
+  guides(linetype = guide_legend(byrow = TRUE),
+         shape = guide_legend(byrow = TRUE))
+
+HCN_Ac_byHerb_diff_plot <- ggplot(allDiffs, aes(x = Herb_diff, y = diff)) +
+  geom_point(size = 5, aes(fill = group, shape = var)) +
+  geom_smooth(method = 'lm', se = FALSE, size = 2, color = ' black', aes(linetype = var)) +
+  ylab("Transect - Park difference \n in HCN/Ac frequency") +
+  xlab("Transect - Park difference \n in maximum temperature") +
+  scale_fill_manual(values = cols, guide = 'none') +
+  scale_shape_manual(values = c(21, 22)) +
+  # scale_color_manual(values = cols) +
+  scale_linetype_manual(values = c('dotted', 'dashed')) +
+  ng1 +
+  theme(legend.position = c(0.13, 0.86), 
+        legend.direction="vertical",
+        legend.text = element_text(size=15), 
+        legend.key = element_rect(fill = "white"),
+        legend.title = element_blank(),
+        legend.key.height= unit(1.5, 'cm'),
+        legend.key.width= unit(2, 'cm'),
+        legend.spacing.x = unit(0.1, "cm"),
+        legend.spacing.y = unit(-0.3, "cm"),
+        legend.background = element_blank()) +
+  guides(linetype = guide_legend(byrow = TRUE),
+         shape = guide_legend(byrow = TRUE))
+  
+
+figure3_base <-( Herb_reactNorm | maxTemp_reactNorm ) / ( HCN_Ac_byHerb_diff_plot | HCN_Ac_byMaxTemp_diff_plot ) +
+  plot_annotation(tag_levels = 'A') &
+  theme(plot.tag.position = c(0.1, 1.1),
+        plot.tag = element_text(size = 20)) 
+blank_p <- plot_spacer() + theme_void()
+leg_fig2 <- get_legend(figure2)
+
+test <- plot_grid(leg_fig2,
+          blank_p,
+          nrow = 1,
+          ncol = 1,
+          align = "hv",
+          axis = "t")
+
+figure3 <- plot_grid(test,
+                     figure3_base,
+                     nrow = 2,
+                     ncol = 1,
+                     align = "hv",
+                     axis = "t",
+                     rel_heights = c(0.10, 1)) +
+  theme(panel.background = element_rect(fill = 'white'))
+
+ggsave(filename = 'analysis/figure3_herb_maxTemp_allParks.png', plot = figure3, device = "png",
+       width = 13, height = 13, units = "in", dpi = 600)
+  

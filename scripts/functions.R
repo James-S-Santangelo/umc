@@ -266,20 +266,22 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
   predicted_vals_main <- ggeffect(mod, terms = c("Habitat")) %>% 
     mutate(x = factor(ifelse(x == 'Park', 'Green space', 'Urban transect'),
                          levels = c('Green space', 'Urban transect'))) %>% 
-    mutate(sig = ifelse(response_var %in% c('Ac', 'HCN'), 'P < 0.05', 'NS'))
+    mutate(sig = ifelse(response_var %in% c('Ac', 'HCN', 'Herb', 'maxTemp'), 'P < 0.05', 'NS'))
   
   # Plot parameters
   y_axis_title <- case_when(response_var == 'HCN' ~ expression(paste("Presence of ", "HCN")),
                             response_var == 'Ac' ~ expression(paste("Presence of ", italic("Ac"))),
-                            response_var == 'Li' ~ expression(paste("Presence of ", italic("Li"))))
+                            response_var == 'Li' ~ expression(paste("Presence of ", italic("Li"))),
+                            response_var == 'Herb' ~ expression(paste("Propotion of ", "lead area lost")),
+                            response_var == 'maxTemp' ~ expression(paste("Maximum ", "summer temperature (°C)")))
   cols <- met.brewer('Lakota', type = 'discrete', n = 5)
 
   # Plot
   plot <-  predicted_vals %>%
     ggplot(., aes(x=x, y=predicted)) +
+    geom_line(size = 1.5, aes(color = group, linetype = sig, group = group), show.legend = FALSE) +
     geom_line(data = predicted_vals_main, size = 1, aes(linetype = sig, group = group),
               color = 'black', show.legend = FALSE, alpha = 1) +
-    geom_line(size = 1.5, aes(color = group, linetype = sig, group = group), show.legend = FALSE) +
     geom_point(size = 5, shape = 21, aes(group = group, fill = group), show.legend = FALSE) +
     geom_point(data = predicted_vals_main, size = 3, shape = 23, fill = 'black', alpha = 1,
                show.legend = FALSE) +

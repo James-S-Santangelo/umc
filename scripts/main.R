@@ -17,6 +17,7 @@ library(patchwork)
 library(MetBrewer)
 library(DHARMa)
 library(lme4)
+library(cowplot)
 source("scripts/functions.R")
 
 # Create all necessary output paths
