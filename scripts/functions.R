@@ -215,10 +215,11 @@ temp_plots <- function(df, response_var){
 #'     One of either `HCN`, `Ac`, or `Li`
 #'     
 #'  @return ggplot object
-plotClines_Imperv_allParks <- function(mod, response_var){
+plotClines_Imperv_allParks <- function(mod, response_var, vals){
   
   # Get predicted values from model
-  vals <- seq(from = 0, to = 100, by = 0.01)
+  # vals <- seq(from = 0, to = 100, length.out = 1000)
+  # print(vals)
   predicted_vals <- ggeffect(mod, terms = c("percent_asphalt [vals]", 'Park')) %>% 
     mutate(sig = ifelse(response_var == 'Ac' & group %in% c('Riverdale', 'High Park'), 'P < 0.05', 'NS'))
   predicted_vals_main <- ggeffect(mod, terms = c("percent_asphalt [vals]")) %>% 
@@ -236,11 +237,10 @@ plotClines_Imperv_allParks <- function(mod, response_var){
     geom_line(size = 1.5, aes(color = group, linetype = sig)) +
     geom_line(data = predicted_vals_main, size = 1, aes(linetype = sig), 
               color = 'black', show.legend = FALSE, alpha = 1) +
-    
     ylab(y_axis_title) +
     xlab("Percent impervious surface") +
-    # coord_cartesian(xlim = c(0, 100.5), ylim = c(0.1, 0.85)) +
-    # scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
+    coord_cartesian(xlim = c(0, 100.5), ylim = c(0.1, 0.85)) +
+    scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
     scale_color_manual(values = cols) +
     scale_linetype_manual(values = c('twodash', 'solid'),
                           limits = c('NS', 'P < 0.05')) +
@@ -260,19 +260,19 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
   
   # Get predicted values from model
   predicted_vals <- ggeffect(mod, terms = c("Habitat", 'Park')) %>% 
-    mutate(x = factor(ifelse(x == 'Park', 'Green space', 'Urban transect'),
-                         levels = c('Green space', 'Urban transect'))) %>% 
+    mutate(x = factor(ifelse(x == 'Park', 'Green space', 'Suburban'),
+                         levels = c('Green space', 'Suburban'))) %>% 
     mutate(sig = ifelse(response_var %in% c('Ac', 'HCN') & group %in% c('Riverdale', 'High Park'), 'P < 0.05', 'NS'))
   predicted_vals_main <- ggeffect(mod, terms = c("Habitat")) %>% 
-    mutate(x = factor(ifelse(x == 'Park', 'Green space', 'Urban transect'),
-                         levels = c('Green space', 'Urban transect'))) %>% 
+    mutate(x = factor(ifelse(x == 'Park', 'Green space', 'Suburban'),
+                         levels = c('Green space', 'Suburban'))) %>% 
     mutate(sig = ifelse(response_var %in% c('Ac', 'HCN', 'Herb', 'maxTemp'), 'P < 0.05', 'NS'))
   
   # Plot parameters
   y_axis_title <- case_when(response_var == 'HCN' ~ expression(paste("Presence of ", "HCN")),
                             response_var == 'Ac' ~ expression(paste("Presence of ", italic("Ac"))),
                             response_var == 'Li' ~ expression(paste("Presence of ", italic("Li"))),
-                            response_var == 'Herb' ~ expression(paste("Propotion of ", "lead area lost")),
+                            response_var == 'Herb' ~ expression(paste("Propotion of ", "leaf area consumed")),
                             response_var == 'maxTemp' ~ expression(paste("Maximum ", "summer temperature (°C)")))
   cols <- met.brewer('Lakota', type = 'discrete', n = 5)
 

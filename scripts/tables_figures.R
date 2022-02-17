@@ -132,12 +132,12 @@ Li_reactNorm <- plotReactNorm_Hab_allParks(modLi_hab_T2, 'Li')
 
 ### Panels D, E, &
 ## Plot of HCN, Ac, and Li against percent asphalt, linetype by significance, colored by park
+vals <- seq(from = 0, to = 100, length.out = 100)
+HCN_clinePlot <- plotClines_Imperv_allParks(modHCN_imperv_herb_T2, 'HCN', vals = vals)
+Ac_clinePlot <- plotClines_Imperv_allParks(modAc_imperv_herb_T3, 'Ac', vals = vals)
+Li_clinePlot <- plotClines_Imperv_allParks(modLi_imperv_herb_T3, 'Li', vals = vals)
 
-HCN_clinePlot <- plotClines_Imperv_allParks(modHCN_imperv_herb_T2, 'HCN')
-Ac_clinePlot <- plotClines_Imperv_allParks(modAc_imperv_herb_T3, 'Ac')
-Li_clinePlot <- plotClines_Imperv_allParks(modLi_imperv_herb_T3, 'Li')
-
-figure2 <-( HCN_reactNorm | Ac_reactNorm | Li_reactNorm) / ( HCN_clinePlot | Ac_clinePlot | Li_clinePlot )+
+figure2 <-( HCN_reactNorm | Ac_reactNorm | Li_reactNorm) / ( HCN_clinePlot | Ac_clinePlot | Li_clinePlot ) +
   plot_layout(guides = 'collect') &
   plot_annotation(tag_levels = 'A') &
   theme(legend.position = 'bottom', 
@@ -153,12 +153,16 @@ figure2 <-( HCN_reactNorm | Ac_reactNorm | Li_reactNorm) / ( HCN_clinePlot | Ac_
         plot.tag = element_text(size = 20)) 
 figure2
 
-ggsave(filename = 'analysis/figure2_allClines_byImperv2.png', plot = figure2, device = "png",
+ggsave(filename = 'analysis/figures/main-text/figure2_allClines_byImperv.png', plot = figure2, device = "png",
+       width = 14, height = 9, units = "in", dpi = 600)
+ggsave(filename = 'analysis/figures/main-text/figure2_allClines_byImperv.pdf', plot = figure2, device = "pdf",
        width = 14, height = 9, units = "in", dpi = 600)
 
 #### FIGURE 3 ####
 
 ### Panels A & B
+
+## TODO: Clean up code for figure 3. Lot of repeated snippets.
 
 # Predicted change in herbivory across % imperv gradient
 Herb_reactNorm <- plotReactNorm_Hab_allParks(modHerb_hab_T2, 'Herb')
@@ -197,13 +201,12 @@ cols <- met.brewer('Lakota', type = 'discrete', n = 5)
 HCN_Ac_byMaxTemp_diff_plot <- ggplot(allDiffs, aes(x = maxTemp_diff, y = diff)) +
   geom_point(size = 5, aes(fill = group, shape = var)) +
   geom_smooth(method = 'lm', se = FALSE, size = 2, color = ' black', aes(linetype = var)) +
-  ylab("Transect - Park difference \n in HCN/Ac frequency") +
-  xlab("Transect - Park difference \n in maximum temperature") +
+  ylab("Suburban - Green space difference \n in HCN/Ac frequency") +
+  xlab("Suburban - Green space difference \n in maximum temperature") +
   scale_fill_manual(values = cols, guide = 'none') +
   scale_shape_manual(values = c(21, 22)) +
   # scale_color_manual(values = cols) +
   scale_linetype_manual(values = c('dotted', 'dashed')) +
-  ng1 +
   ng1 +
   theme(legend.position = c(0.13, 0.86), 
         legend.direction="vertical",
@@ -217,12 +220,12 @@ HCN_Ac_byMaxTemp_diff_plot <- ggplot(allDiffs, aes(x = maxTemp_diff, y = diff)) 
         legend.background = element_blank()) +
   guides(linetype = guide_legend(byrow = TRUE),
          shape = guide_legend(byrow = TRUE))
-
+summary(lm(diff ~ maxTemp_diff, data = allDiffs %>% filter(var == 'Ac')))
 HCN_Ac_byHerb_diff_plot <- ggplot(allDiffs, aes(x = Herb_diff, y = diff)) +
   geom_point(size = 5, aes(fill = group, shape = var)) +
   geom_smooth(method = 'lm', se = FALSE, size = 2, color = ' black', aes(linetype = var)) +
-  ylab("Transect - Park difference \n in HCN/Ac frequency") +
-  xlab("Transect - Park difference \n in maximum temperature") +
+  ylab("Suburban - Green space difference \n in HCN/Ac frequency") +
+  xlab("Suburban - Green space difference \n in maximum temperature") +
   scale_fill_manual(values = cols, guide = 'none') +
   scale_shape_manual(values = c(21, 22)) +
   # scale_color_manual(values = cols) +
@@ -250,15 +253,15 @@ figure3_base <-( Herb_reactNorm | maxTemp_reactNorm ) / plot_spacer() / ( HCN_Ac
 blank_p <- plot_spacer() + theme_void()
 leg_fig2 <- get_legend(figure2)
 
-test <- plot_grid(leg_fig2,
-          blank_p,
-          nrow = 1,
-          ncol = 1,
-          align = "hv",
-          axis = "t") +
+leg <- plot_grid(leg_fig2,
+                 blank_p,
+                 nrow = 1,
+                 ncol = 1,
+                 align = "hv",
+                 axis = "t") +
   theme(panel.background = element_rect(fill = 'white', color = 'white'))
 
-figure3 <- plot_grid(test,
+figure3 <- plot_grid(leg,
                      figure3_base,
                      nrow = 2,
                      ncol = 1,
@@ -266,6 +269,8 @@ figure3 <- plot_grid(test,
                      axis = "t",
                      rel_heights = c(0.15, 1))
 
-ggsave(filename = 'analysis/figure3_herb_maxTemp_allParks.png', plot = figure3, device = "png",
+ggsave(filename = 'analysis/figures/main-text/figure3_herb_maxTemp_allParks.png', plot = figure3, device = "png",
+       width = 15, height = 13, units = "in", dpi = 600)
+ggsave(filename = 'analysis/figures/main-text/igure3_herb_maxTemp_allParks.pdf', plot = figure3, device = "pdf",
        width = 15, height = 13, units = "in", dpi = 600)
   
