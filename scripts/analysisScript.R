@@ -125,7 +125,7 @@ modLi_hab_AnT3 <- Anova(modLi_hab_T3, type = 3)
 # Refit with type 2 to test main effects
 modLi_hab_T2 <- glm(Li ~ Park * Habitat, 
                     family = 'binomial', data = allPlants_allParks)
-modLi_hab_AnT2 <- Anova(modLi_imperv_herb_T2, type = 2)
+modLi_hab_AnT2 <- Anova(modLi_hab_T2, type = 2)
 
 ## Percent imperv & Herbivory predictors
 

@@ -324,7 +324,7 @@ HCN_Ac_byMaxTemp_diff_plot <- ggplot(allDiffs, aes(x = maxTemp_diff, y = diff)) 
         legend.background = element_blank()) +
   guides(linetype = guide_legend(byrow = TRUE),
          shape = guide_legend(byrow = TRUE))
-summary(lm(diff ~ maxTemp_diff, data = allDiffs %>% filter(var == 'Ac')))
+
 HCN_Ac_byHerb_diff_plot <- ggplot(allDiffs, aes(x = Herb_diff, y = diff)) +
   geom_point(size = 5, aes(fill = group, shape = var)) +
   geom_smooth(method = 'lm', se = FALSE, size = 2, color = ' black', aes(linetype = var)) +
@@ -375,6 +375,6 @@ figure3 <- plot_grid(leg,
 
 ggsave(filename = 'analysis/figures/main-text/figure3_herb_maxTemp_allParks.png', plot = figure3, device = "png",
        width = 15, height = 13, units = "in", dpi = 600)
-ggsave(filename = 'analysis/figures/main-text/igure3_herb_maxTemp_allParks.pdf', plot = figure3, device = "pdf",
+ggsave(filename = 'analysis/figures/main-text/figure3_herb_maxTemp_allParks.pdf', plot = figure3, device = "pdf",
        width = 15, height = 13, units = "in", dpi = 600)
   
