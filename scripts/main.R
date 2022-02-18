@@ -18,6 +18,7 @@ library(MetBrewer)
 library(DHARMa)
 library(lme4)
 library(cowplot)
+library(ggmap)
 source("scripts/functions.R")
 
 # Create all necessary output paths
@@ -58,4 +59,4 @@ source('scripts/analysisScript.R')
 source('scripts/tables_figures.R')
 
 # Descriptive stats
-source('scripts/descriptive stats.R')
+source('scripts/descriptive_stats.R')

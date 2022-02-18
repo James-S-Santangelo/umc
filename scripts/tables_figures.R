@@ -120,6 +120,108 @@ purrr::walk(iButton_split, temp_plots, "minTemp")
 purrr::walk(iButton_split, temp_plots, "maxTemp")
 purrr::walk(iButton_split, temp_plots, "meanTemp")
 
+#### FIGURE 1 ####
+
+### Map of Toronto with parks as points
+### One inset for each park showing locations of plants and iButtons
+
+## Major Toronto map
+
+# Get coordinates of parks
+cols <- met.brewer('Lakota', type = 'discrete', n = 5)
+park_coords <- allPlants_allParks %>% 
+  dplyr::select(Park, Latitude_park, Longitude_park) %>% 
+  distinct() %>% 
+  mutate(col = cols)
+
+# Collect tiles used to build map
+allParks_bbox <- make_bbox(park_coords$Longitude_park, park_coords$Latitude_park, f = 0.1)
+allParks_map <- get_map(location = allParks_bbox, zoom = 11, source = 'stamen')
+
+toronto_map <- ggmap(allParks_map) +
+  geom_point(data = park_coords, aes(x = Longitude_park, y = Latitude_park, fill = Park), 
+             size = 5, alpha = 0.7, shape = 21, show.legend = FALSE) +
+  xlab("Longitude") + ylab('Latitude') +
+  scale_fill_manual(values = cols) +
+  theme(panel.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border=element_rect(colour = 'black', size = 2, fill = NA),
+        axis.text = element_text(size = 15),
+        axis.title = element_text(size = 17))
+
+ggsave(filename = 'analysis/figures/main-text/figure1/figure1_toronto_map.png', plot = toronto_map, 
+       device = 'png', dpi = 600, height = 6, width = 8, units = 'in')
+ggsave(filename = 'analysis/figures/main-text/figure1/figure1_toronto_map.pdf', plot = toronto_map, 
+       device = 'pdf', dpi = 600, height = 6, width = 8, units = 'in')
+
+## Erindale inset
+
+# Get coordinates of iButtons
+ibutton_df <- iButton_summaries %>% 
+  mutate(Long = Long * -1) %>% 
+  dplyr::select(Park, Lat, Long) %>% 
+  distinct()
+
+plot_map_inset <- function(park_name, plant_df, ibutton_df, color_df){
+  
+  # Download map tiles
+  coords <- plant_df %>% filter(Park == park_name)
+  bbox <- make_bbox(Longitude_plant, Latitude_plant, data = coords, f = 0.1)
+  map <- get_map(bbox, zoom = 15, source = 'stamen')
+  
+  # Set colors and axis labels
+  col <- color_df %>% filter(Park == park_name) %>% pull(col)
+  min_lat <- min(coords$Latitude_plant)
+  max_lat <- max(coords$Latitude_plant)
+  min_long <- min(coords$Longitude_plant)
+  max_long <- max(coords$Longitude_plant)
+  if(park_name == 'Erindale'){
+    yran <- seq(from = min_lat, to = max_lat, length.out=8)
+  }else{
+    yran <- seq(from = min_lat, to = max_lat, length.out=4)
+  }
+  if(park_name == 'Erindale'){
+    xran <- seq(from = min_long, to = max_long, length.out=4)
+  }else{
+    xran <- seq(from = min_long, to = max_long, length.out=8)
+  }
+
+  # Plot
+  plot <- ggmap(map) +
+    geom_point(data = plant_df %>% filter(Park == park_name),
+               aes(x = Longitude_plant, y = Latitude_plant),
+               size = 2, alpha = 0.6, shape = 21, fill = col) +
+    geom_point(data = ibutton_df %>% filter(Park == park_name), 
+               aes(x = Long, y = Lat), 
+               size = 3, alpha = 1, shape = 22, fill = "orange") +
+    scale_x_continuous(breaks = xran, expand = c(0, 0), 
+                       labels = scales::number_format(accuracy = 0.001, decimal.mark = '.')) +
+    scale_y_continuous(breaks = yran, expand = c(0, 0),
+                       labels = scales::number_format(accuracy = 0.001, decimal.mark = '.')) +
+    xlab("Longitude") + ylab('Latitude') + ggtitle(park_name) +
+    theme(panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border=element_rect(colour = col, size = 2, fill = NA),
+          axis.text = element_text(size = 13),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title = element_blank(),
+          title = element_text(size = 15, face = 'bold'))
+  return(plot)
+}
+
+erin_map <- plot_map_inset('Erindale', plant_df = allPlants_allParks, ibutton_df = ibutton_df, color_df = park_coords)
+humber_map <- plot_map_inset('Humber', plant_df = allPlants_allParks, ibutton_df = ibutton_df, color_df = park_coords)
+highPark_map <- plot_map_inset('High Park', plant_df = allPlants_allParks, ibutton_df = ibutton_df, color_df = park_coords)
+river_map <- plot_map_inset('Riverdale', plant_df = allPlants_allParks, ibutton_df = ibutton_df, color_df = park_coords)
+rouge_map <- plot_map_inset('Rouge', plant_df = allPlants_allParks, ibutton_df = ibutton_df, color_df = park_coords)
+
+
+
+ggsave(filename = 'analysis/humber_map.png', plot = humber_map, device = 'png', dpi = 600,
+       height = 4, width = 10, units = 'in')
+
 #### FIGURE 2 ####
 
 ### Panels A, B, & C
@@ -197,7 +299,6 @@ allDiffs <- bind_rows(predHCN_byPark, predAc_byPark) %>%
   left_join(., predHerb_byPark, by = 'group') %>% 
   left_join(., predMaxTemp_byPark, by = 'group')
 
-cols <- met.brewer('Lakota', type = 'discrete', n = 5)
 HCN_Ac_byMaxTemp_diff_plot <- ggplot(allDiffs, aes(x = maxTemp_diff, y = diff)) +
   geom_point(size = 5, aes(fill = group, shape = var)) +
   geom_smooth(method = 'lm', se = FALSE, size = 2, color = ' black', aes(linetype = var)) +
