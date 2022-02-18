@@ -19,6 +19,7 @@ library(DHARMa)
 library(lme4)
 library(cowplot)
 library(ggmap)
+library(ggsn)
 source("scripts/functions.R")
 
 # Create all necessary output paths

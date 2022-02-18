@@ -297,3 +297,52 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
   
   return(plot)
 }
+
+plot_map_inset <- function(park_name, plant_df, ibutton_df, color_df){
+  
+  # Download map tiles
+  coords <- plant_df %>% filter(Park == park_name)
+  bbox <- make_bbox(Longitude_plant, Latitude_plant, data = coords, f = 0.1)
+  map <- get_map(bbox, zoom = 15, source = 'stamen')
+  
+  # Set colors and axis labels
+  col <- color_df %>% filter(Park == park_name) %>% pull(col)
+  min_lat <- min(coords$Latitude_plant)
+  max_lat <- max(coords$Latitude_plant)
+  min_long <- min(coords$Longitude_plant)
+  max_long <- max(coords$Longitude_plant)
+  if(park_name == 'Erindale'){
+    yran <- seq(from = min_lat, to = max_lat, length.out=8)
+  }else{
+    yran <- seq(from = min_lat, to = max_lat, length.out=4)
+  }
+  if(park_name == 'Erindale'){
+    xran <- seq(from = min_long, to = max_long, length.out=4)
+  }else{
+    xran <- seq(from = min_long, to = max_long, length.out=8)
+  }
+  
+  # Plot
+  plot <- ggmap(map) +
+    geom_point(data = plant_df %>% filter(Park == park_name),
+               aes(x = Longitude_plant, y = Latitude_plant),
+               size = 2, alpha = 0.6, shape = 21, fill = col) +
+    geom_point(data = ibutton_df %>% filter(Park == park_name), 
+               aes(x = Long, y = Lat), 
+               size = 3, alpha = 1, shape = 22, fill = "#20235b") +
+    scale_x_continuous(breaks = xran, expand = c(0, 0), 
+                       labels = scales::number_format(accuracy = 0.001, decimal.mark = '.')) +
+    scale_y_continuous(breaks = yran, expand = c(0, 0),
+                       labels = scales::number_format(accuracy = 0.001, decimal.mark = '.')) +
+    xlab("Longitude") + ylab('Latitude') + ggtitle(park_name) +
+    coord_equal() + # For ggsn scalebar and north arrow later. Looks better.
+    theme(panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border=element_rect(colour = col, size = 2, fill = NA),
+          axis.text = element_text(size = 13),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title = element_blank(),
+          title = element_text(size = 15, face = 'bold'))
+  return(plot)
+}
