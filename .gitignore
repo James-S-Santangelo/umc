@@ -4,3 +4,5 @@
 renv/Library/
 data-raw/submitted_excel_files/
 *plots
+*.png
+notebooks/
