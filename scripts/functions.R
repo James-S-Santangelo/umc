@@ -307,6 +307,7 @@ plot_map_inset <- function(park_name, plant_df, ibutton_df, color_df){
   
   # Set colors and axis labels
   col <- color_df %>% filter(Park == park_name) %>% pull(col)
+
   min_lat <- min(coords$Latitude_plant)
   max_lat <- max(coords$Latitude_plant)
   min_long <- min(coords$Longitude_plant)
@@ -339,10 +340,10 @@ plot_map_inset <- function(park_name, plant_df, ibutton_df, color_df){
     theme(panel.background = element_blank(),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
-          panel.border=element_rect(colour = col, size = 2, fill = NA),
-          axis.text = element_text(size = 13),
+          panel.border=element_rect(colour = col, size = 5, fill = NA),
+          axis.text = element_text(size = 15),
           axis.text.x = element_text(angle = 45, hjust = 1),
           axis.title = element_blank(),
-          title = element_text(size = 15, face = 'bold'))
+          title = element_text(size = 17, face = 'bold'))
   return(plot)
 }

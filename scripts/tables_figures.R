@@ -142,23 +142,27 @@ yran <- seq(from = min(park_coords$Latitude_park), to = max(park_coords$Latitude
 xran <- seq(from = min(park_coords$Longitude_park), to = max(park_coords$Longitude_park), length.out=6)
 toronto_map <- ggmap(allParks_map) +
   geom_point(data = park_coords, aes(x = Longitude_park, y = Latitude_park, fill = Park), 
-             size = 5, alpha = 0.7, shape = 21, show.legend = FALSE) +
+             size = 8, alpha = 0.7, shape = 21, show.legend = FALSE) +
   xlab("Longitude") + ylab('Latitude') +
   scale_x_continuous(breaks = xran, expand = c(0, 0), 
                      labels = scales::number_format(accuracy = 0.001, decimal.mark = '.')) +
   scale_y_continuous(breaks = yran, expand = c(0, 0),
                      labels = scales::number_format(accuracy = 0.001, decimal.mark = '.')) +
-  scale_fill_manual(values = cols) +
+  scale_fill_manual(values = c('Erindale' = park_coords %>% filter(Park == 'Erindale') %>% pull(col),
+                               'Humber' = park_coords %>% filter(Park == 'Humber') %>% pull(col),
+                               'High Park' = park_coords %>% filter(Park == 'High Park') %>% pull(col),
+                               'Riverdale' = park_coords %>% filter(Park == 'Riverdale') %>% pull(col),
+                               'Rouge' = park_coords %>% filter(Park == 'Rouge') %>% pull(col))) +
   coord_equal() +
   theme(panel.background = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        panel.border=element_rect(colour = 'black', size = 2, fill = NA),
+        panel.border=element_rect(colour = 'black', size = 3, fill = NA),
         axis.text = element_text(size = 15),
         axis.title = element_text(size = 17)) +
-  scalebar(y.min=43.5375, y.max=43.5385, x.min=-79.2590, x.max=-79.1300, 
+  scalebar(y.min=43.5420, y.max=43.5430, x.min=-79.2590, x.max=-79.1300, 
            dist = 5, dist_unit = 'km', transform= TRUE, model='WGS84',
-           height = 3, st.dist = 5)
+           height = 8, st.dist = 5)
 
 ggsave(filename = 'analysis/figures/main-text/figure1/figure1_toronto_map.pdf', plot = toronto_map, 
        device = 'pdf', dpi = 600, height = 8, width = 14, units = 'in')
@@ -173,47 +177,57 @@ ibutton_df <- iButton_summaries %>%
   distinct()
 
 erin_map_base <- plot_map_inset('Erindale', plant_df = allPlants_allParks, ibutton_df = ibutton_df, color_df = park_coords) +
-  scalebar(y.min=43.5265, y.max=43.530, x.min=-79.6490, x.max=-79.6385, 
+  coord_fixed(ratio = 1/1.6) +
+  scalebar(y.min=43.5285, y.max=43.5335, x.min=-79.6490, x.max=-79.6385, 
            dist = 500, dist_unit = 'm', transform= TRUE, model='WGS84',
-           height = 0.13, st.dist = 0.2)
+           height = 0.17, st.dist = 0.2)
+
 ggsave(filename = 'analysis/figures/main-text/figure1/figure1_erindale_inset.pdf', plot = erin_map_base, 
-       device = 'pdf', dpi = 600, height = 10, width = 8, units = 'in')
+       device = 'pdf', dpi = 600, height = 10, width = 10, units = 'in')
 
 ## Humber inset
 
 humber_map_base <- plot_map_inset('Humber', plant_df = allPlants_allParks, ibutton_df = ibutton_df, color_df = park_coords) +
-  scalebar(y.min=43.6405, y.max=43.6440, x.min=-79.476, x.max=-79.4635, 
+  coord_fixed(ratio = 2.75/1) +
+  scalebar(y.min=43.640, y.max=43.6440, x.min=-79.475, x.max=-79.4640, 
            dist = 500, dist_unit = 'm', transform= TRUE, model='WGS84',
-           height = 0.15, st.dist = 0.2)
+           height = 0.08, st.dist = 0.1)
+
 ggsave(filename = 'analysis/figures/main-text/figure1/figure1_humber_inset.pdf', plot = humber_map_base, 
-       device = 'pdf', dpi = 600, height = 5, width = 13, units = 'in')
+       device = 'pdf', dpi = 600, height = 10, width = 10, units = 'in')
 
 ## High Park inset
 
 highPark_map_base <- plot_map_inset('High Park', plant_df = allPlants_allParks, ibutton_df = ibutton_df, color_df = park_coords) +
+  coord_fixed(ratio = 2/1) +
   scalebar(y.min=43.6400, y.max=43.6435, x.min=-79.4370, x.max=-79.4300, 
            dist = 500, dist_unit = 'm', transform= TRUE, model='WGS84',
-           height = 0.11, st.dist = 0.18)
+           height = 0.07, st.dist = 0.13)
+
 ggsave(filename = 'analysis/figures/main-text/figure1/figure1_highPark_inset.pdf', plot = highPark_map_base, 
-       device = 'pdf', dpi = 600, height = 5, width = 11, units = 'in')
+       device = 'pdf', dpi = 600, height = 10, width = 10, units = 'in')
 
 # Riverdal inset
 
 river_map_base <- plot_map_inset('Riverdale', plant_df = allPlants_allParks, ibutton_df = ibutton_df, color_df = park_coords) +
+  coord_fixed(ratio = 2.5/1) +
   scalebar(y.min=43.6655, y.max=43.6690, x.min=-79.3370, x.max=-79.3255, 
            dist = 500, dist_unit = 'm', transform= TRUE, model='WGS84',
-           height = 0.13, st.dist = 0.18)
+           height = 0.08, st.dist = 0.13)
+
 ggsave(filename = 'analysis/figures/main-text/figure1/figure1_riverdale_inset.pdf', plot = river_map_base, 
-       device = 'pdf', dpi = 600, height = 3, width = 14, units = 'in')
+       device = 'pdf', dpi = 600, height = 5, width = 12, units = 'in')
 
 ## Rouge inset
 
 rouge_map_base <- plot_map_inset('Rouge', plant_df = allPlants_allParks, ibutton_df = ibutton_df, color_df = park_coords) +
-  scalebar(y.min=43.8045, y.max=43.8080, x.min=-79.1350, x.max=-79.1220, 
+  coord_fixed(ratio = 2.25/1) +
+  scalebar(y.min=43.8050, y.max=43.8085, x.min=-79.1360, x.max=-79.1230, 
            dist = 500, dist_unit = 'm', transform= TRUE, model='WGS84',
-           height = 0.15, st.dist = 0.2)
+           height = 0.11, st.dist = 0.15)
+
 ggsave(filename = 'analysis/figures/main-text/figure1/figure1_rouge_inset.pdf', plot = rouge_map_base, 
-       device = 'pdf', dpi = 600, height = 5, width = 13, units = 'in')
+       device = 'pdf', dpi = 600, height = 8, width = 10, units = 'in')
 
 
 # + 
