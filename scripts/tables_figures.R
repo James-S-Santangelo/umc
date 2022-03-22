@@ -229,16 +229,6 @@ rouge_map_base <- plot_map_inset('Rouge', plant_df = allPlants_allParks, ibutton
 ggsave(filename = 'analysis/figures/main-text/figure1/figure1_rouge_inset.pdf', plot = rouge_map_base, 
        device = 'pdf', dpi = 600, height = 8, width = 10, units = 'in')
 
-
-# + 
-#   ggsn::scalebar(location = 'topleft', dist = 50, dist_unit = 'm', model = "WGS84", 
-#                  height = 0.5, st.dist = 0.5)
-
-
-
-ggsave(filename = 'analysis/humber_map.png', plot = humber_map, device = 'png', dpi = 600,
-       height = 4, width = 10, units = 'in')
-
 #### FIGURE 2 ####
 
 ### Panels A, B, & C
@@ -343,7 +333,7 @@ HCN_Ac_byHerb_diff_plot <- ggplot(allDiffs, aes(x = Herb_diff, y = diff)) +
   geom_point(size = 5, aes(fill = group, shape = var)) +
   geom_smooth(method = 'lm', se = FALSE, size = 2, color = ' black', aes(linetype = var)) +
   ylab("Suburban - Green space difference \n in HCN/Ac frequency") +
-  xlab("Suburban - Green space difference \n in maximum temperature") +
+  xlab("Suburban - Green space difference \n in herbivory") +
   scale_fill_manual(values = cols, guide = 'none') +
   scale_shape_manual(values = c(21, 22)) +
   # scale_color_manual(values = cols) +
