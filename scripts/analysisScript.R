@@ -12,7 +12,8 @@ allPlants_allParks <- read_csv("data-clean/allPlants_allParks.csv", show_col_typ
 
 # Load data with summaries of daily temperature values for each Ibutton
 iButton_summaries <- read_csv("data-clean/iButton_summaries.csv", show_col_types = FALSE) %>% 
-  mutate(Habitat = ifelse(Location == "Park", "Park", "Transect"))
+  mutate(Habitat = ifelse(Location == "Park", "Park", "Transect"),
+         Park = ifelse(Park == 'HighPark', "High Park", Park))
 
 #### CHANGES IN HCN/GENE PRESENCE/ABSENCE ####
 

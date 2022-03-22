@@ -279,7 +279,7 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
   # Plot
   plot <-  predicted_vals %>%
     ggplot(., aes(x=x, y=predicted)) +
-    geom_line(size = 1.5, aes(color = group, linetype = sig, group = group), show.legend = FALSE) +
+    geom_line(size = 1.5, aes(color = group, linetype = sig, group = group)) +
     geom_line(data = predicted_vals_main, size = 1, aes(linetype = sig, group = group),
               color = 'black', show.legend = FALSE, alpha = 1) +
     geom_point(size = 5, shape = 21, aes(group = group, fill = group), show.legend = FALSE) +
