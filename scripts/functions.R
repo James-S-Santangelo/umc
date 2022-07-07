@@ -249,7 +249,7 @@ plotClines_Imperv_allParks <- function(mod, response_var, vals){
   return(plot)
 }
 
-#' Plots all HCN or gene clines on single plot against `percent_asphalt`
+#' Plots all HCN or gene clines on single plot against `Habitat`
 #' 
 #' @param df Dataframe containing predicted values from fitted model
 #' @param response_var Response variable to be plotted. 
@@ -285,6 +285,8 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
     geom_point(size = 5, shape = 21, aes(group = group, fill = group), show.legend = FALSE) +
     geom_point(data = predicted_vals_main, size = 3, shape = 23, fill = 'black', alpha = 1,
                show.legend = FALSE) +
+    coord_cartesian(ylim = c(0.1, 0.85)) +
+    scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
     ylab(y_axis_title) +
     # xlab("") +
     # coord_cartesian(ylim = c(0.1, 0.85)) +
