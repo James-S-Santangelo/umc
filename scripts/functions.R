@@ -229,20 +229,20 @@ plotClines_Imperv_allParks <- function(mod, response_var, vals){
   y_axis_title <- case_when(response_var == 'HCN' ~ expression(paste("Presence of ", "HCN")),
                             response_var == 'Ac' ~ expression(paste("Presence of ", italic("Ac"))),
                             response_var == 'Li' ~ expression(paste("Presence of ", italic("Li"))))
-  cols <- met.brewer('Lakota', type = 'discrete', n = 5)
+  cols <- c('black', met.brewer('Lakota', type = 'discrete', n = 5))
 
   # Plot
   plot <-  predicted_vals %>% 
     ggplot(., aes(x=x, y=predicted)) +
     geom_line(size = 1.5, aes(color = group, linetype = sig), alpha = 0.75) +
-    geom_line(data = predicted_vals_main, size = 1.5, aes(linetype = sig), 
-              color = 'black', show.legend = FALSE, alpha = 1) +
+    geom_line(data = predicted_vals_main, size = 1.5, aes(linetype = sig, color = 'All Parks'), 
+              show.legend = FALSE, alpha = 1) +
     ylab(y_axis_title) +
     xlab("Percent impervious surface") +
     coord_cartesian(xlim = c(0, 100.5), ylim = c(0.1, 0.85)) +
     scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
-    scale_color_manual(values = cols) +
-    scale_linetype_manual(values = c('twodash', 'solid'),
+    scale_color_manual("Site", values = cols) +
+    scale_linetype_manual("Significance", values = c('twodash', 'solid'),
                           limits = c('NS', 'P < 0.05')) +
     ng1
   
@@ -274,7 +274,7 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
                             response_var == 'Li' ~ expression(paste("Presence of ", italic("Li"))),
                             response_var == 'Herb' ~ expression(paste("Propotion of ", "leaf area consumed")),
                             response_var == 'maxTemp' ~ expression(paste("Maximum ", "summer temperature (°C)")))
-  cols <- met.brewer('Lakota', type = 'discrete', n = 5)
+  cols <- c('black', met.brewer('Lakota', type = 'discrete', n = 5))
   dodge <- position_dodge(width = 0.50)
   alpha <- 0.75
   
@@ -287,27 +287,20 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
     geom_line(size = 1.5, aes(color = group, linetype = sig, group = group), position = dodge, alpha = alpha) +
     geom_point(size = 5, shape = 21, aes(group = group, fill = group, color = group), 
                show.legend = FALSE, position = dodge, alpha = alpha) +
-    geom_line(data = predicted_vals_main, size = 1.5, aes(linetype = sig, group = group),
-              color = 'black', show.legend = FALSE, alpha = 1, position = dodge) +
+    geom_line(data = predicted_vals_main, size = 1.5, aes(linetype = sig, group = 'All Parks', color = 'All Parks'), 
+              show.legend = FALSE, alpha = 1, position = dodge) +
     geom_errorbar(data = predicted_vals_main, aes(ymin = conf.low, ymax = conf.high), size = 1, width = 0.1,
                   position = dodge, alpha = 1, show.legend = FALSE) + 
-    geom_point(data = predicted_vals_main, size = 4.5, shape = 23, fill = 'black', alpha = 1,
-               show.legend = FALSE, position = dodge) +
+    geom_point(data = predicted_vals_main, size = 4.5, shape = 23, fill = 'black', alpha = 1, position = dodge) +
     coord_cartesian(ylim = c(0.05, 0.85)) +
     scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
     ylab(y_axis_title) +
-    # xlab("") +
-    # coord_cartesian(ylim = c(0.1, 0.85)) +
-    # scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
-    scale_color_manual(values = cols) +
-    scale_fill_manual(values = cols) +
-    scale_linetype_manual(values = c('twodash', 'solid'),
+    scale_color_manual("Site", values = cols) +
+    scale_fill_manual("Site", values = cols) +
+    scale_linetype_manual("Significance", values = c('twodash', 'solid'),
                           limits = c('NS', 'P < 0.05')) +
     ng1 + theme(axis.title.x = element_blank()) 
-  # +
-  #   guides(colour = guide_legend(override.aes = list(alpha = 1)),
-  #          linetype = guide_legend(override.aes = list(alpha = 1)),
-  #          group = guide_legend(override.aes = list(alpha = 1)))
+
   
   
   return(plot)

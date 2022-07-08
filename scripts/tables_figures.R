@@ -248,18 +248,21 @@ Li_clinePlot <- plotClines_Imperv_allParks(modLi_imperv_herb_T3, 'Li', vals = va
 
 figure2 <-( HCN_reactNorm | Ac_reactNorm | Li_reactNorm) / ( HCN_clinePlot | Ac_clinePlot | Li_clinePlot ) +
   plot_layout(guides = 'collect') &
+  guides(colour = guide_legend(title.position = "top"),
+         linetype = guide_legend(title.position = "top")) &
   plot_annotation(tag_levels = 'A') &
   theme(legend.position = 'bottom', 
         legend.direction="horizontal",
-        legend.text = element_text(size=15), 
+        legend.text = element_text(size=15, margin = margin(r = 0.35, unit = "cm")), 
         legend.key = element_rect(fill = "white"),
-        legend.title = element_blank(),
+        legend.title = element_text(size=17, face = 'bold'),
+        legend.title.align=0.5,
         legend.key.size = unit(1, "cm"),
-        legend.spacing.x = unit(0.5, "cm"),
+        legend.spacing.x = unit(0.1, "cm"),
         legend.background = element_blank(),
         legend.box.background = element_rect(colour = "black", size = 1),
         plot.tag.position = c(0.1, 1.1),
-        plot.tag = element_text(size = 20)) 
+        plot.tag = element_text(size = 20))
 figure2
 
 ggsave(filename = 'analysis/figures/main-text/figure2_allClines_byImperv.png', plot = figure2, device = "png",
