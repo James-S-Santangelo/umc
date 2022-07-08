@@ -277,6 +277,13 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
   cols <- c('black', met.brewer('Lakota', type = 'discrete', n = 5))
   dodge <- position_dodge(width = 0.50)
   alpha <- 0.75
+  if(response_var == 'Herb'){
+    yaxis_scale <- seq(from = 0, to = 0.15, by = 0.05)
+  }else if(response_var == 'maxTemp'){
+    yaxis_scale <- seq(from = 21, to = 33, by = 3)
+  }else{
+    yaxis_scale <- seq(from = 0.1, to = 0.8, by = 0.1)
+  }
   
   # Plot
   plot <-  predicted_vals %>%
@@ -293,8 +300,7 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
                   position = dodge, alpha = 1, show.legend = FALSE) + 
     geom_point(data = predicted_vals_main, aes(fill = 'All Parks'), size = 4.5, shape = 23, alpha = 1,
                show.legend = FALSE, position = dodge) +
-    coord_cartesian(ylim = c(0.05, 0.85)) +
-    scale_y_continuous(breaks = seq(from = 0.1, to = 0.8, by = 0.1)) +
+    scale_y_continuous(breaks = yaxis_scale) +
     ylab(y_axis_title) +
     scale_color_manual("Site", values = cols) +
     scale_fill_manual("Site", values = cols) +
