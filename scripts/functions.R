@@ -353,12 +353,13 @@ plotCline_withData <- function(mod, response_var, vals, park, raw_data_df, cols_
     geom_line(size = 1.5, aes(linetype = sig), alpha = 0.75, color = col) +
     ylab(y_axis_title) +
     xlab("Percent impervious surface") +
+    ggtitle(park) +
     coord_cartesian(xlim = c(0, 100.5), ylim = c(0, 1)) +
     scale_y_continuous(breaks = seq(from = 0, to = 1, by = 0.2)) +
     # scale_color_manual("Site", values = cols) +
     scale_linetype_manual("Significance", values = c('twodash', 'solid'),
                           limits = c('NS', 'P < 0.05')) +
-    ng1
+    ng1 + guides(linetype = guide_legend(override.aes = list(color = 'black') ) )
   
   return(plot)
 }
