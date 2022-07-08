@@ -282,14 +282,17 @@ maxTemp_reactNorm <- plotReactNorm_Hab_allParks(mod_summerTemps_hab_T2, 'maxTemp
 
 figure3 <-( Herb_reactNorm | maxTemp_reactNorm ) +
   plot_layout(guides = 'collect') &
+  guides(colour = guide_legend(title.position = "top"),
+         linetype = guide_legend(title.position = "top")) &
   plot_annotation(tag_levels = 'A') &
   theme(legend.position = 'bottom', 
         legend.direction="horizontal",
-        legend.text = element_text(size=15), 
+        legend.text = element_text(size=15, margin = margin(r = 0.35, unit = "cm")), 
         legend.key = element_rect(fill = "white"),
-        legend.title = element_blank(),
+        legend.title = element_text(size=17, face = 'bold'),
+        legend.title.align=0.5,
         legend.key.size = unit(1, "cm"),
-        legend.spacing.x = unit(0.5, "cm"),
+        legend.spacing.x = unit(0.1, "cm"),
         legend.background = element_blank(),
         legend.box.background = element_rect(colour = "black", size = 1),
         plot.tag.position = c(0.1, 1.1),
