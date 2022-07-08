@@ -130,6 +130,7 @@ purrr::walk(iButton_split, temp_plots, "meanTemp")
 # Get coordinates of parks
 cols <- met.brewer('Lakota', type = 'discrete', n = 5)
 park_coords <- allPlants_allParks %>% 
+  arrange(Park) %>% 
   dplyr::select(Park, Latitude_park, Longitude_park) %>% 
   distinct() %>% 
   mutate(col = cols)
@@ -305,3 +306,104 @@ ggsave(filename = 'analysis/figures/main-text/figure3_herb_maxTemp_allParks.pdf'
        width = 15, height = 7, units = "in", dpi = 600)
 
  
+#### FIGURE S1 ####
+
+S1a <- plotCline_withData(modHCN_imperv_herb_T2, "HCN", vals = vals, park = "Erindale", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S1b <- plotCline_withData(modHCN_imperv_herb_T2, "HCN", vals = vals, park = "High Park", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S1c <- plotCline_withData(modHCN_imperv_herb_T2, "HCN", vals = vals, park = "Humber", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S1d <- plotCline_withData(modHCN_imperv_herb_T2, "HCN", vals = vals, park = "Riverdale", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S1e <- plotCline_withData(modHCN_imperv_herb_T2, "HCN", vals = vals, park = "Rouge", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S1f <- plotCline_withData(modHCN_imperv_herb_T2, "HCN", vals = vals, park = "All Parks", raw_data_df = allPlants_allParks, cols_df = park_coords)
+
+figureS1 <-( S1a | S1b | S1c) / ( S1d | S1e | S1f ) +
+  plot_layout(guides = 'collect') &
+  # guides(colour = guide_legend(title.position = "top"),
+  #        linetype = guide_legend(title.position = "top")) &
+  plot_annotation(tag_levels = 'A') &
+  theme(legend.position = 'bottom', 
+        legend.direction="horizontal",
+        legend.text = element_text(size=15, margin = margin(r = 0.35, unit = "cm")), 
+        legend.key = element_rect(fill = "white"),
+        legend.title = element_text(size=17, face = 'bold'),
+        legend.title.align=0.5,
+        legend.key.size = unit(1, "cm"),
+        legend.spacing.x = unit(0.1, "cm"),
+        legend.background = element_blank(),
+        legend.box.background = element_rect(colour = "black", size = 1),
+        plot.tag.position = c(0.1, 1),
+        plot.tag = element_text(size = 20),
+        plot.title = element_text(size = 19, face = "bold"))
+figureS1
+
+ggsave(filename = 'analysis/figures/supplemental/figureS1_HCN_by_imperv_splitPark.png', plot = figureS1, device = "png",
+       width = 14, height = 9, units = "in", dpi = 600)
+ggsave(filename = 'analysis/figures/supplemental/figureS1_HCN_by_imperv_splitPark.pdf', plot = figureS1, device = "pdf",
+       width = 14, height = 9, units = "in", dpi = 600)
+
+#### FIGURE S1 ####
+
+S2a <- plotCline_withData(modAc_imperv_herb_T3, "Ac", vals = vals, park = "Erindale", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S2b <- plotCline_withData(modAc_imperv_herb_T3, "Ac", vals = vals, park = "High Park", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S2c <- plotCline_withData(modAc_imperv_herb_T3, "Ac", vals = vals, park = "Humber", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S2d <- plotCline_withData(modAc_imperv_herb_T3, "Ac", vals = vals, park = "Riverdale", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S2e <- plotCline_withData(modAc_imperv_herb_T3, "Ac", vals = vals, park = "Rouge", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S2f <- plotCline_withData(modAc_imperv_herb_T3, "Ac", vals = vals, park = "All Parks", raw_data_df = allPlants_allParks, cols_df = park_coords)
+
+figureS2 <-( S2a | S2b | S2c) / ( S2d | S2e | S2f ) +
+  plot_layout(guides = 'collect') &
+  # guides(colour = guide_legend(title.position = "top"),
+  #        linetype = guide_legend(title.position = "top")) &
+  plot_annotation(tag_levels = 'A') &
+  theme(legend.position = 'bottom', 
+        legend.direction="horizontal",
+        legend.text = element_text(size=15, margin = margin(r = 0.35, unit = "cm")), 
+        legend.key = element_rect(fill = "white"),
+        legend.title = element_text(size=17, face = 'bold'),
+        legend.title.align=0.5,
+        legend.key.size = unit(1, "cm"),
+        legend.spacing.x = unit(0.1, "cm"),
+        legend.background = element_blank(),
+        legend.box.background = element_rect(colour = "black", size = 1),
+        plot.tag.position = c(0.1, 1),
+        plot.tag = element_text(size = 20),
+        plot.title = element_text(size = 19, face = "bold"))
+figureS2
+
+ggsave(filename = 'analysis/figures/supplemental/figureS2_Ac_by_imperv_splitPark.png', plot = figureS2, device = "png",
+       width = 14, height = 9, units = "in", dpi = 600)
+ggsave(filename = 'analysis/figures/supplemental/figureS2_Ac_by_imperv_splitPark.pdf', plot = figureS2, device = "pdf",
+       width = 14, height = 9, units = "in", dpi = 600)
+
+#### FIGURE S1 ####
+
+S3a <- plotCline_withData(modLi_imperv_herb_T3, "Li", vals = vals, park = "Erindale", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S3b <- plotCline_withData(modLi_imperv_herb_T3, "Li", vals = vals, park = "High Park", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S3c <- plotCline_withData(modLi_imperv_herb_T3, "Li", vals = vals, park = "Humber", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S3d <- plotCline_withData(modLi_imperv_herb_T3, "Li", vals = vals, park = "Riverdale", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S3e <- plotCline_withData(modLi_imperv_herb_T3, "Li", vals = vals, park = "Rouge", raw_data_df = allPlants_allParks, cols_df = park_coords)
+S3f <- plotCline_withData(modLi_imperv_herb_T3, "Li", vals = vals, park = "All Parks", raw_data_df = allPlants_allParks, cols_df = park_coords)
+
+figureS3 <-( S3a | S3b | S3c) / ( S3d | S3e | S3f ) +
+  plot_layout(guides = 'collect') &
+  # guides(colour = guide_legend(title.position = "top"),
+  #        linetype = guide_legend(title.position = "top")) &
+  plot_annotation(tag_levels = 'A') &
+  theme(legend.position = 'bottom', 
+        legend.direction="horizontal",
+        legend.text = element_text(size=15, margin = margin(r = 0.35, unit = "cm")), 
+        legend.key = element_rect(fill = "white"),
+        legend.title = element_text(size=17, face = 'bold'),
+        legend.title.align=0.5,
+        legend.key.size = unit(1, "cm"),
+        legend.spacing.x = unit(0.1, "cm"),
+        legend.background = element_blank(),
+        legend.box.background = element_rect(colour = "black", size = 1),
+        plot.tag.position = c(0.1, 1),
+        plot.tag = element_text(size = 20),
+        plot.title = element_text(size = 19, face = "bold"))
+figureS3
+
+ggsave(filename = 'analysis/figures/supplemental/figureS3_HCN_by_imperv_splitPark.png', plot = figureS3, device = "png",
+       width = 14, height = 9, units = "in", dpi = 600)
+ggsave(filename = 'analysis/figures/supplemental/figureS3_HCN_by_imperv_splitPark.pdf', plot = figureS3, device = "pdf",
+       width = 14, height = 9, units = "in", dpi = 600)

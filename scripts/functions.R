@@ -312,6 +312,57 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
   return(plot)
 }
 
+#' Plot gene/phenotype frequency against `percent_asphalt` for particular Park
+#' 
+#' @param mod Model from which predicted values can be estimated
+#' @param response_var Response variable to be plotted. 
+#'     One of either `HCN`, `Ac`, or `Li`
+#' @param vals Values at which predcited values should be estimate
+#' @param park Site that should be plotted
+#' @param raw_data_df Dataframe with raw phenotype and gene frequency data
+#' @param cols_df Dataframe containing colors used for plotting
+#'     
+#'  @return ggplot object
+plotCline_withData <- function(mod, response_var, vals, park, raw_data_df, cols_df){
+  
+  if(park == 'All Parks'){
+    raw_data <- raw_data_df
+    col <- 'black'
+    predicted_vals <- ggeffect(mod, terms = c("percent_asphalt [vals]")) %>%
+      mutate(sig = ifelse(response_var %in% c('Ac', 'HCN'), 'P < 0.05', 'NS'))
+  }else{
+    raw_data <- raw_data_df %>% filter(Park == park) 
+    predicted_vals <- ggeffect(mod, terms = c("percent_asphalt [vals]", 'Park')) %>% 
+      mutate(sig = ifelse(response_var == 'Ac' & group %in% c('Riverdale', 'High Park'), 'P < 0.05', 'NS')) %>%
+      filter(group == park)
+    col <- cols_df %>% filter(Park == park) %>% pull(col)
+  }
+  
+  
+  # Plot parameters
+  y_axis_title <- case_when(response_var == 'HCN' ~ expression(paste("Presence of ", "HCN")),
+                            response_var == 'Ac' ~ expression(paste("Presence of ", italic("Ac"))),
+                            response_var == 'Li' ~ expression(paste("Presence of ", italic("Li"))))
+  
+  # Plot
+  plot <-  predicted_vals %>% 
+    ggplot(., aes(x=x, y=predicted)) +
+    geom_point(data = raw_data, aes(x = percent_asphalt, y = !!sym(response_var)), color = col, fill = col,
+               shape = 21, size = 2, alpha = 0.5) +
+    geom_ribbon(aes(ymax = conf.high, ymin =conf.low), fill = col, alpha = 0.35) +
+    geom_line(size = 1.5, aes(linetype = sig), alpha = 0.75, color = col) +
+    ylab(y_axis_title) +
+    xlab("Percent impervious surface") +
+    coord_cartesian(xlim = c(0, 100.5), ylim = c(0, 1)) +
+    scale_y_continuous(breaks = seq(from = 0, to = 1, by = 0.2)) +
+    # scale_color_manual("Site", values = cols) +
+    scale_linetype_manual("Significance", values = c('twodash', 'solid'),
+                          limits = c('NS', 'P < 0.05')) +
+    ng1
+  
+  return(plot)
+}
+
 plot_map_inset <- function(park_name, plant_df, ibutton_df, color_df){
   
   # Download map tiles
