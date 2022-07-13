@@ -396,7 +396,7 @@ plot_map_inset <- function(park_name, plant_df, ibutton_df, color_df){
                size = 2, alpha = 0.6, shape = 21, fill = col) +
     geom_point(data = ibutton_df %>% filter(Park == park_name), 
                aes(x = Long, y = Lat), 
-               size = 3, alpha = 1, shape = 22, fill = "#20235b") +
+               size = 4.5, alpha = 0.75, shape = 22, fill = "#20235b") +
     scale_x_continuous(breaks = xran, expand = c(0, 0), 
                        labels = scales::number_format(accuracy = 0.001, decimal.mark = '.')) +
     scale_y_continuous(breaks = yran, expand = c(0, 0),
@@ -407,9 +407,9 @@ plot_map_inset <- function(park_name, plant_df, ibutton_df, color_df){
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.border=element_rect(colour = col, size = 5, fill = NA),
-          axis.text = element_text(size = 15),
+          axis.text = element_text(size = 22),
           axis.text.x = element_text(angle = 45, hjust = 1),
           axis.title = element_blank(),
-          title = element_text(size = 17, face = 'bold'))
+          title = element_text(size = 25, face = 'bold'))
   return(plot)
 }
