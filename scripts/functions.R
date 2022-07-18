@@ -278,11 +278,15 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
   dodge <- position_dodge(width = 0.50)
   alpha <- 0.75
   if(response_var == 'Herb'){
+    ylim = c(0, 0.15)
     yaxis_scale <- seq(from = 0, to = 0.15, by = 0.05)
   }else if(response_var == 'maxTemp'){
+    ylim = c(21, 33)
     yaxis_scale <- seq(from = 21, to = 33, by = 3)
   }else{
+    ylim = c(0.1, 0.8)
     yaxis_scale <- seq(from = 0.1, to = 0.8, by = 0.1)
+    print(yaxis_scale)
   }
   
   # Plot
@@ -300,6 +304,7 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
                   position = dodge, alpha = 1, show.legend = FALSE) + 
     geom_point(data = predicted_vals_main, aes(fill = 'All Parks'), size = 4.5, shape = 23, alpha = 1,
                show.legend = FALSE, position = dodge) +
+    coord_cartesian(ylim = ylim) +
     scale_y_continuous(breaks = yaxis_scale) +
     ylab(y_axis_title) +
     scale_color_manual("Site", values = cols) +

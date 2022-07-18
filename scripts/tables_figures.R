@@ -280,8 +280,6 @@ ggsave(filename = 'analysis/figures/main-text/figure2_allClines_byImperv.pdf', p
 
 ### Panels A & B
 
-## TODO: Clean up code for figure 3. Lot of repeated snippets.
-
 # Predicted change in herbivory across % imperv gradient
 Herb_reactNorm <- plotReactNorm_Hab_allParks(modHerb_hab_T2, 'Herb')
 maxTemp_reactNorm <- plotReactNorm_Hab_allParks(mod_summerTemps_hab_T2, 'maxTemp')
