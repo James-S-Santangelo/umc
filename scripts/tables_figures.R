@@ -299,14 +299,14 @@ figure3 <-( Herb_reactNorm | maxTemp_reactNorm ) +
         legend.spacing.x = unit(0.1, "cm"),
         legend.background = element_blank(),
         legend.box.background = element_rect(colour = "black", size = 1),
-        plot.tag.position = c(0.1, 1.1),
+        plot.tag.position = c(0.1, 1.05),
         plot.tag = element_text(size = 20))
 figure3
 
 ggsave(filename = 'analysis/figures/main-text/figure3_herb_maxTemp_allParks.png', plot = figure3, device = "png",
-       width = 15, height = 7, units = "in", dpi = 600)
+       width = 15, height = 7.5, units = "in", dpi = 600)
 ggsave(filename = 'analysis/figures/main-text/figure3_herb_maxTemp_allParks.pdf', plot = figure3, device = "pdf",
-       width = 15, height = 7, units = "in", dpi = 600)
+       width = 15, height = 7.5, units = "in", dpi = 600)
 
  
 #### FIGURE S1 ####
