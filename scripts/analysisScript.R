@@ -20,6 +20,7 @@ iButton_summaries <- read_csv("data-clean/iButton_summaries.csv", show_col_types
 # Run global logistic regressions testing whether HCN or gene (i.e., Ac/Li) presence/absence
 #   varies across parks, Habitat (i.e. park green space), or their interaction.
 #   Also run follow-up models where "Habitat" is replaced with impervious surface and Herbivory
+#   Values from these models are in Table 1
 
 ### HCN ###
 
@@ -144,6 +145,10 @@ modLi_imperv_herb_AnT3 <- Anova(modLi_imperv_herb_T3, type = 3)
 
 #### CHANGES IN HERBIVORY ####
 
+# Models testing whether herbivore damage changes among parks, habitat, or their interaction
+#   Also include models replacing habitat % impervious surface
+#   Values from models are in Table 2
+
 ## Habitat predictor
 
 # Model using type 3 SS
@@ -189,6 +194,10 @@ imperv1_predHerb <- propHerb_predicted %>% filter(x == max(x)) %>% pull(predicte
 pred_percent_changeHerb <- round((imperv1_predHerb - imperv0_predHerb) / imperv0_predHerb, 2) * 100
 
 #### TEMPERATURE ANALYSES ####
+
+# Models testing whether winter and summer temperatures change among parks, habitat, or their interaction
+#   Also include models replacing habitat % impervious surface
+#   Values from models are in Table 2
 
 # Identify warmest and coldest months
 warm_cold_months <- iButton_summaries %>% 
@@ -283,3 +292,56 @@ mod_winterTemps_imperv_AnT3 <- Anova(mod_winterTemps_imperv_T3, type = 3)
 diagn_mod_winterTemps_imperv_T3 <- simulateResiduals(fittedModel = mod_winterTemps_imperv_T3, plot = T)
 # More robust test of outliers. No outliers detected 
 diagn_mod_winterTemps_imperv_T3_outTest <- testOutliers(diagn_mod_winterTemps_imperv_T3, type = 'bootstrap')
+
+#### SUPPLEMENTARY ANALYSES: DISTANCE_SET0 AS A PREDICTOR OF HCN/AC/LI ####
+
+# Run global logistic regressions testing whether HCN or gene (i.e., Ac/Li) presence/absence
+#   varies across parks, distance (park plants with distance set to 0), or their interaction
+#   Values from models are in Table S1
+
+### HCN ###
+
+# Model with contrasts for type 3
+modHCN_dist0_herb_T3 <- glm(HCN ~ Park * distance_set0 * Herbivory, 
+                             family = 'binomial', data = allPlants_allParks,
+                             contrasts=list(Park=contr.sum))
+
+# Model diagnostics. Looks good
+diagn_HCN_dist0_herb <- simulateResiduals(fittedModel = modHCN_dist0_herb_T3, 
+                                           plot = T)
+
+# F-tests with type 3 SS. No interactions
+modHCN_dist0herb_AnT3 <- Anova(modHCN_dist0_herb_T3, type = 3)
+
+### Ac ###
+
+# Model with contrasts for type 3
+modAc_dist0_herb_T3 <- glm(Ac ~ Park * distance_set0 * Herbivory, 
+                            family = 'binomial', data = allPlants_allParks,
+                            contrasts=list(Park=contr.sum))
+
+# Model diagnostics. Looks good
+diagn_Ac_dist0_herb <- simulateResiduals(fittedModel = modAc_dist0_herb_T3, 
+                                          plot = T)
+
+# F-tests with type 3 SS. Interaction present
+modAc_dist0_herb_AnT3 <- Anova(modAc_dist0_herb_T3, type = 3)
+
+### Li ###
+
+# Model with contrasts for type 3
+modLi_dist0_herb_T3 <- glm(Li ~ Park * distance_set0 * Herbivory, 
+                            family = 'binomial', data = allPlants_allParks,
+                            contrasts=list(Park=contr.sum))
+
+# Model diagnostics. Looks good
+diagn_Li_dist0_herb <- simulateResiduals(fittedModel = modLi_dist0_herb_T3, 
+                                          plot = T)
+
+# F-tests with type 3 SS. Interaction present
+modLi_dist0_herb_AnT3 <- Anova(modLi_dist0_herb_T3, type = 3)
+
+# Refit with type 2 to test main effects
+modLi_dist0_herb_T2 <- glm(Li ~ Park * distance_set0 * Herbivory, 
+                             family = 'binomial', data = allPlants_allParks)
+modLi_dist0_herb_AnT2 <- Anova(modLi_dist0_herb_T2, type = 2)
