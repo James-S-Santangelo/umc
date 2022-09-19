@@ -4,7 +4,7 @@
 ### Manuscript: The effects of environmental heterogeneity within a city on the evolution of clines
 #### Authors: James S. Santangelo, Cindy Roux, and Marc T. J. Johnson
 
-This project has been accepted at Journal of Ecology] <br>
+This project has been accepted at Journal of Ecology
 
 ### Abstract
 
