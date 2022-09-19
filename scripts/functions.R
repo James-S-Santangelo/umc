@@ -291,7 +291,6 @@ plotReactNorm_Hab_allParks <- function(mod, response_var){
   }else{
     ylim = c(0.1, 0.8)
     yaxis_scale <- seq(from = 0.1, to = 0.8, by = 0.1)
-    print(yaxis_scale)
   }
   
   # Plot
