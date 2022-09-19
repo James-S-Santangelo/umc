@@ -36,6 +36,183 @@ haversine <- function(long1, lat1, long2, lat2) {
   return(d) # Distance in km
 }
 
+#' Formats Lat/Longs and calculates distance of plant
+#'     from center of Park
+#'     
+#' @param df Dataframe containing plant-level data for Park
+#' 
+#' @return Modified dataframe with formatted Lat/Longs and distance column
+add_distance <- function(df){
+  
+  
+  df_modified <- df %>% 
+    
+    # Convert Degrees, Minutes, Seconds to Decimal Degrees.
+    separate(Latitude, sep = "[ |.|°]", into = c("dir_lat", "deg_lat", "dec_lat")) %>% 
+    separate(Longitude, sep = "[ |.|°]", into = c("dir_long", "deg_long", "dec_long")) %>% 
+    mutate(Latitude_plant = as.numeric(paste(deg_lat, dec_lat, sep = ".")),
+           Longitude_plant = -1 * as.numeric(paste(deg_long, dec_long, sep = "."))) %>% 
+    select(-matches("dir|deg|dec")) %>% 
+    left_join(., park_centres, by = "Park") %>% 
+    
+    # Calculate distance using haversine formula
+    mutate(distance = haversine(Longitude_park, Latitude_park, Longitude_plant, Latitude_plant))
+  
+  return(df_modified)
+}
+
+#' Rename vegetation columns and add total area surveyed
+#' 
+#' @param df Dataframe containing plant-level vegetation data for Park
+#' 
+#' @return Dataframe with renamed columns
+rename_vegetation_cols <- function(df){
+  
+  df_modified <- df %>% 
+    rename("area_vegetation" = "Vegetation cover m²",
+           "area_asphalt" = "Asphalt m²",
+           "percent_veg" = "% Vegetation",
+           "percent_asphalt" = "% Asphalt") %>% 
+    mutate(total_area = area_vegetation + area_asphalt)
+  
+  return(df_modified)
+  
+  
+}
+
+#' Function to clean Ibutton data and handle edge cases
+#' 
+#' @param df Ibutton data for specific park
+#' @param round Round of Ibutton collection. Either `First`, `Second`, or `Third`
+#' 
+#' @return None. Write cleaned dataframe to disk
+clean_iButton_data <- function(df, round){
+  
+  # Create datetime for when iButton was placed the field
+  df <- as.data.frame(df) %>%
+    mutate(Installation_time = paste0(str_replace(Installation_time, "h", ":"), ":00")) %>%
+    mutate(Installation_Datetime = as.POSIXct(paste(Installation_date, Installation_time)))
+  
+  # Get correct path to iButton datasheet, based on name of iButton in master sheet
+  button <- df %>% pull(button)
+  pattern <- sprintf("^%s_*", button)
+  Ibutton_csvs <- sprintf("data-raw/submitted_excel_files/Ibuttons/%s_round/", round)
+  csv_name <- list.files(Ibutton_csvs, pattern = pattern)
+  
+  # If CSV file for Ibutton Exists, then clean and write dataframe
+  # Some Ibuttons were lost for Second and Third collections so these don't have data
+  if(length(csv_name) != 0){
+    path_to_csv <- paste0(Ibutton_csvs, csv_name)
+    
+    if(round == 'First'){
+      
+      # Read in iButton data, skipping header (variable length)
+      r <- readLines(path_to_csv)
+      dt <- grep("Date/Time", r)
+      Ibutton_data <- read_delim(path_to_csv, skip = dt, show_col_types = FALSE, delim=',')
+      names(Ibutton_data) <- c('Date_Time', 'Unit', 'Ten_val', 'Deci_val')
+      buttons_fucked_by_excel <- c("Erindale2W", "Erindale3E", "Erindale4E", "Erindale5E", "Erindale5P", "Erindale5W")
+      Ibutton_data <- Ibutton_data %>%
+        mutate(Deci_val = ifelse(is.na(Deci_val), 0, Deci_val),
+               Value = as.numeric(paste(Ten_val, Deci_val, sep = '.'))) %>%
+        dplyr::select(-Ten_val, -Deci_val) %>% 
+        mutate(Date_Time = case_when(button %in% buttons_fucked_by_excel ~ paste0(Date_Time, ":00"),
+                                     TRUE ~ Date_Time))
+      
+      # Process and clean raw iButton data
+      Ibutton_data_mod <- Ibutton_data %>%
+        separate(Date_Time, into = c("Date", "Time"), sep = " ") %>%
+        
+        # Convert 2 digit year to 4 digit year
+        # https://stackoverflow.com/questions/60581813/is-there-a-way-to-make-a-2-digit-year-into-a-4-digit-year-in-r
+        mutate(Date = strftime(as.Date(Date, format="%d/%m/%y"), "%d/%m/%Y")) %>% 
+        
+        # Datetime for temperature record
+        mutate(Datetime = as.POSIXct(paste(Date, Time), format="%d/%m/%Y %H:%M:%S")) %>%
+        
+        # Keep only observations later than when button was placed in the field
+        filter(!(Datetime < df$Installation_Datetime)) %>%
+        
+        # Add, rename, and select columns
+        mutate(Year = strftime(Datetime, format = "%Y"),
+               Month = strftime(Datetime, format = "%B"),
+               Day = strftime(Datetime, format = "%d"),
+               Week = strftime(Datetime, format = "%V"),
+               Park = df$Park,
+               Lat = df$Latitude,
+               Long = df$Longitude,
+               Percent_asphalt = round(df$Asphalt_perc, 3),
+               Location = df$Location,
+               Button = button,
+               Round = round) %>%
+        select(-Unit, -Datetime) %>%
+        rename("Temp" = "Value")
+      
+      # Write clean dataframe to disk
+      dir.create(sprintf('data-clean/iButton_csvs/%s_round', round), showWarnings = FALSE)
+      outpath <- sprintf("data-clean/iButton_csvs/%s_round/%s_iButton_%sRound_clean.csv", round, button, round)
+      write_csv(Ibutton_data_mod, outpath)
+      
+    }else{
+      
+      # Read in iButton data, skipping header (variable length)
+      r <- readLines(path_to_csv)
+      dt <- grep("Date/Time", r)
+      # Need to manualy set column names for second and third rounds
+      Ibutton_data <- read_csv(path_to_csv, skip = dt, show_col_types = FALSE) 
+      names(Ibutton_data) <- c('Date', 'Time', 'Unit', 'Value')
+      
+      # Process and clean raw iButton data
+      Ibutton_data_mod <- Ibutton_data %>%
+        
+        # Datetime for temperature record
+        mutate(Datetime = as.POSIXct(paste(Date, Time), format="%d/%m/%Y %H:%M:%S")) %>%
+        
+        # Keep only observations later than when button was placed in the field
+        filter(!(Datetime < df$Installation_Datetime)) %>%
+        
+        # Add, rename, and select columns
+        mutate(Year = strftime(Datetime, format = "%Y"),
+               Month = strftime(Datetime, format = "%B"),
+               Day = strftime(Datetime, format = "%d"),
+               Week = strftime(Datetime, format = "%V"),
+               Park = df$Park,
+               Lat = df$Latitude,
+               Long = df$Longitude,
+               Percent_asphalt = round(df$Asphalt_perc, 3),
+               Location = df$Location,
+               Button = button,
+               Round = round) %>%
+        select(-Unit, -Datetime) %>%
+        rename("Temp" = "Value")
+      
+      # Write clean dataframe to disk
+      dir.create(sprintf('data-clean/iButton_csvs/%s_round', round), showWarnings = FALSE)
+      outpath <- sprintf("data-clean/iButton_csvs/%s_round/%s_iButton_%sRound_clean.csv", round, button, round)
+      write_csv(Ibutton_data_mod, outpath)
+    }
+  }
+}
+
+#' Function to summarise Ibutton temperature data
+#' 
+#' @param df Dataframe with cleaned Ibutton data
+#' 
+#' @return Dataframe with temperature summaries for Ibuttons
+summarise_iButtons <- function(df){
+  
+  df_mod <- df %>% 
+    mutate(Week = as.character(Week)) %>% 
+    group_by(Week, Year, Month, Day, Location, Lat, Long, Park, Percent_asphalt, Button, Round) %>% 
+    summarise(week_date = first(Date),
+              minTemp = min(Temp),
+              maxTemp = max(Temp),
+              meanTemp = mean(Temp),
+              .groups = 'drop')
+  return(df_mod)
+  
+}
+
 #' Function to run and summarize model testing for changes in 
 #'     gene or HCN frequencies for specific park
 #' 

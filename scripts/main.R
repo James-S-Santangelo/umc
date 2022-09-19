@@ -22,10 +22,6 @@ library(ggmap)
 library(ggsn)
 source("scripts/functions.R")
 
-# Create all necessary output paths
-paths <- c()
-purrr::walk(paths, dir.create, show.warnings = FALSE)
-
 ################################
 #### STEP 1: CLEAN RAW DATA ####
 ################################

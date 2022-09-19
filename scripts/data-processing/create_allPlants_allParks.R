@@ -27,31 +27,6 @@ park_centres <- read_csv("data-raw/Park_centres.csv") %>%
          Longitude_park = -1 * as.numeric(dec_deg_long)) %>% 
   select(-matches("dir|dec"))
 
-#' Formats Lat/Longs and calculates distance of plant
-#'     from center of Park
-#'     
-#' @param df Dataframe containing plant-level data for Park
-#' 
-#' @return Modified dataframe with formatted Lat/Longs and distance column
-add_distance <- function(df){
-  
-  
-  df_modified <- df %>% 
-    
-    # Convert Degrees, Minutes, Seconds to Decimal Degrees.
-    separate(Latitude, sep = "[ |.|°]", into = c("dir_lat", "deg_lat", "dec_lat")) %>% 
-    separate(Longitude, sep = "[ |.|°]", into = c("dir_long", "deg_long", "dec_long")) %>% 
-    mutate(Latitude_plant = as.numeric(paste(deg_lat, dec_lat, sep = ".")),
-           Longitude_plant = -1 * as.numeric(paste(deg_long, dec_long, sep = "."))) %>% 
-    select(-matches("dir|deg|dec")) %>% 
-    left_join(., park_centres, by = "Park") %>% 
-    
-    # Calculate distance using haversine formula
-    mutate(distance = haversine(Longitude_park, Latitude_park, Longitude_plant, Latitude_plant))
-  
-  return(df_modified)
-}
-
 # Add distance to all park datasets
 erindale_modified <- add_distance(erindale_data)
 humber_modified <- add_distance(humber_data)
@@ -81,26 +56,6 @@ riverdale_veg <- read_csv("data-raw/csv/vegetation/Riverdale_Park_vegetation.csv
 rouge_veg <- read_csv("data-raw/csv/vegetation/Rouge_Park_vegetation.csv") %>% 
   select(Park, Plant, "Vegetation cover m²":"% Asphalt") %>% 
   na.omit()
-
-
-#' Rename vegetation columns and add total area surveyed
-#' 
-#' @param df Dataframe containing plant-level vegetation data for Park
-#' 
-#' @return Dataframe with renamed columns
-rename_vegetation_cols <- function(df){
-  
-  df_modified <- df %>% 
-    rename("area_vegetation" = "Vegetation cover m²",
-           "area_asphalt" = "Asphalt m²",
-           "percent_veg" = "% Vegetation",
-           "percent_asphalt" = "% Asphalt") %>% 
-    mutate(total_area = area_vegetation + area_asphalt)
-  
-  return(df_modified)
-  
-  
-}
 
 # Rename vegetation columns for all datasets
 erindale_veg_modified <- rename_vegetation_cols(erindale_veg)
