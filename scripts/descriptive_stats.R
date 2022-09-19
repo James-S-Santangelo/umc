@@ -1,6 +1,6 @@
 # Descriptive statistics
 
 # Number of plants by Park
-t <- allPlants_allParks %>% 
+numPlants_byPark <- allPlants_allParks %>% 
   group_by(Park) %>% 
   tally()
